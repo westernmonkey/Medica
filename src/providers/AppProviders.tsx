@@ -19,7 +19,7 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // onAuthStateChanged is a real-time listener from Firebase.
     // It automatically checks if the user is logged in, logged out, or if that status changes.
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+   // const unsubscribe = onAuthStateChanged(auth, (user) => {
       // When the check is complete, we update our state with the user's
       // information (it will be the user object or null).
       setUser(user);
@@ -27,8 +27,8 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
 
     // This is a cleanup function. When the component is removed, we "unsubscribe"
     // from the listener to prevent memory leaks.
-    return () => unsubscribe();
-  }, []); // The empty array [] means this effect runs only once.
+ //   return () => unsubscribe();
+ // }, []); // The empty array [] means this effect runs only once.
 
   // The provider component returns the AuthContext.Provider.
   // It wraps the "children" (the rest of our app) and gives them access

@@ -18,8 +18,8 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 // Get the specific Firebase services we will use
-const auth = getAuth(app);
-const db = getFirestore(app);
+// const auth = getAuth(app);
+// const db = getFirestore(app);
 
 // Export the services so we can use them in other parts of our application
 export { app, auth, db };
