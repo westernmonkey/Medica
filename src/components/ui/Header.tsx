@@ -29,7 +29,10 @@ export default function Header() {
         </div>
 
         {/* Navigation Section */}
-        <nav className="ml-auto mr-10">
+        <nav className="ml-auto mr-10 flex items-center gap-6">
+          <Link href="/1v1" className="text-sm font-medium">
+            1v1
+          </Link>
           {user ? (
             // If user is logged in
             <div className="flex items-center gap-4">

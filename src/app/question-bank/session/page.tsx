@@ -1,13 +1,11 @@
-// src/app/question-bank/session/page.tsx (FIXED)
-
 export const dynamic = 'force-dynamic';
 
 import fs from 'fs';
 import path from 'path';
+import { shuffle } from '@/lib/utils';
 import QuizClient from './quiz-client';
-import 'katex/dist/katex.min.css'; // Import KaTeX CSS
+import 'katex/dist/katex.min.css';
 
-// Define the shape of a single question
 export interface QuestionData {
   _id: string;
   question: {
@@ -24,17 +22,7 @@ export interface QuestionData {
     text: string | null;
     image: string | null;
   };
-  // Add any other fields you might need
 }
-
-// Helper to shuffle an array
-const shuffle = (array: any[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
 
 // This Server Component reads all the question files
 export default async function QuizPage({
