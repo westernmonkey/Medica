@@ -8,18 +8,36 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <aside class="side-rail">
+    <div class="logo-plaque"><img class="medica-logo" src="assets/medica-logo.png" alt="Medica" /></div>
+    <span class="rail-caption">MEDNOTES</span>
+    <a href="#notes-section" class="rail-link"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg> Notes</a>
+    <a href="#note-section" class="rail-link"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg> New note</a>
+    <div class="rail-footer"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span>Stored on your device</span></div>
+  </aside>
   <main class="shell">
     <header class="top">
-      <div class="brand"><img class="medica-logo" src="assets/medica-logo.png" alt="Medica" /><span class="brand-divider" aria-hidden="true"></span><h1>MedNotes</h1></div>
+      <div class="brand"><span class="header-kicker">MEDICA</span><span class="brand-divider" aria-hidden="true"></span><span>Your notes</span></div>
       <button id="open-search" type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg> Search <kbd id="search-shortcut">⌘ K</kbd></button>
     </header>
-    <section class="composer-wrap panel" aria-label="New note">
+    <section class="identity-panel" aria-label="MedNotes">
+      <span class="identity-label">YOUR PERSONAL NOTEBOOK</span><h1>MedNotes<span aria-hidden="true">✦</span></h1>
+      <svg class="identity-art" aria-hidden="true" viewBox="0 0 240 190">
+        <circle class="disc" cx="128" cy="96" r="80"/>
+        <g transform="rotate(-14 100 100)"><rect class="back-page" x="41" y="32" width="112" height="137" rx="12"/><path class="art-line" d="M57 59h63M57 72h49"/></g>
+        <g transform="rotate(9 137 102)"><rect class="front-page" x="82" y="28" width="110" height="140" rx="12"/><path class="notebook-line" d="M105 64h59M105 81h49M105 98h59M105 115h34"/><path class="notebook-line" d="M95 28v140"/></g>
+        <path class="spark-line" d="M207 25v22m-11-11h22M27 116v16m-8-8h16"/>
+        <circle class="peach-disc" cx="187" cy="149" r="25"/><path class="check-line" d="m177 149 7 7 14-16"/>
+      </svg>
+      <span class="identity-foot">TEXT / PHOTOS / VOICE</span>
+    </section>
+    <section class="composer-wrap panel" id="note-section" aria-label="New note">
       <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14zM4 14l5 5"/></svg></span><h2>New note</h2></div>
         <svg class="panel-art" aria-hidden="true" viewBox="0 0 112 48"><circle class="art-butter" cx="82" cy="22" r="18"/><path class="art-line" d="M5 32c12-30 23 19 39-8S64 3 72 21s19 15 32-10"/><path class="art-spark" d="M42 4v12m-6-6h12M100 32v10m-5-5h10"/></svg>
       </div>
       <div id="composer"></div>
     </section>
-    <section class="list-wrap panel" aria-label="Your notes">
+    <section class="list-wrap panel" id="notes-section" aria-label="Your notes">
       <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M3 7h4M3 12h4M3 17h4M11 8h5M11 12h5M11 16h3"/></svg></span><h2>Notes</h2><span id="note-count" class="count-chip" aria-live="polite"></span></div><svg class="stack-art" aria-hidden="true" viewBox="0 0 48 48"><rect class="art-mint" x="8" y="8" width="27" height="32" rx="5" transform="rotate(-12 22 24)"/><rect class="art-paper" x="15" y="5" width="27" height="32" rx="5" transform="rotate(8 28 22)"/><path class="art-line" d="m22 15 13 2m-14 5 13 2m-14 5 8 1"/></svg></div>
       <div id="post-list"></div>
     </section>
