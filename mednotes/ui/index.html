@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedNotes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <h1>MedNotes</h1>
+    <div class="backup-box">
+      <input id="backup-password" type="password" placeholder="Backup password" autocomplete="off" />
+      <button type="button" id="export-backup-btn">Export Backup</button>
+    </div>
+  </header>
+
+  <section class="search-row">
+    <form id="search-form">
+      <input id="search-input" type="search" placeholder="Search notes by meaning" autocomplete="off" />
+      <button type="submit">Search</button>
+    </form>
+    <div id="date-filter" class="date-filter"></div>
+  </section>
+
+  <section class="composer-wrap">
+    <div id="composer"></div>
+  </section>
+
+  <section class="list-wrap">
+    <div id="post-list"></div>
+  </section>
+
+  <script src="date-filter.js"></script>
+  <script src="post-list.js"></script>
+  <script src="composer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

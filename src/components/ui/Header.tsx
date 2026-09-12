@@ -33,6 +33,9 @@ export default function Header() {
           <Link href="/1v1" className="text-sm font-medium">
             1v1
           </Link>
+          <Button asChild variant="ghost">
+            <Link href="/mednotes">MedNotes</Link>
+          </Button>
           {user ? (
             // If user is logged in
             <div className="flex items-center gap-4">

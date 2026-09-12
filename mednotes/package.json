@@ -1,0 +1,23 @@
+{
+  "name": "mednotes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local offline medical notes with semantic search",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/test-save-post.js tests/test-embedding.js tests/test-search.js",
+    "test:storage": "node --test tests/test-save-post.js",
+    "test:embedding": "node --test tests/test-embedding.js",
+    "test:search": "node --test tests/test-search.js",
+    "test:ui": "node tests/test-ui-clicks.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.4.0",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "playwright": "^1.55.0"
+  }
+}

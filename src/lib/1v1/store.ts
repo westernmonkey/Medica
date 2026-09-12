@@ -47,19 +47,6 @@ function isRoundLocked(match: Match): boolean {
   return match.players.every((p) => match.answers[p.id]);
 }
 
-function advanceIfNeeded(match: Match) {
-  if (!isRoundLocked(match) || match.status !== "playing") {
-    return;
-  }
-  if (match.currentIndex >= match.questions.length - 1) {
-    match.status = "done";
-    return;
-  }
-  match.currentIndex += 1;
-  match.answers = {};
-  match.roundWinnerId = null;
-}
-
 export function createMatch(name: string): { match: Match; playerId: string } {
   let code = makeCode();
   while (matches.has(code)) {
@@ -139,7 +126,31 @@ export function answerMatch(
     player.score += 1;
   }
 
-  advanceIfNeeded(match);
+  if (isRoundLocked(match) && match.status === "playing") {
+    scheduleAdvance(match);
+  }
   broadcastMatch(match.code, toPublic(match));
   return match;
+}
+
+const pendingAdvance = new Map<string, ReturnType<typeof setTimeout>>();
+
+function scheduleAdvance(match: Match) {
+  if (pendingAdvance.has(match.code)) {
+    return;
+  }
+  pendingAdvance.set(
+    match.code,
+    setTimeout(() => {
+      pendingAdvance.delete(match.code);
+      if (match.currentIndex >= match.questions.length - 1) {
+        match.status = "done";
+      } else {
+        match.currentIndex += 1;
+        match.answers = {};
+        match.roundWinnerId = null;
+      }
+      broadcastMatch(match.code, toPublic(match));
+    }, 3000),
+  );
 }

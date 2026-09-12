@@ -1,8 +1,41 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { BlockMath, InlineMath } from "react-katex";
+import "katex/dist/katex.min.css";
 import type { PublicMatch } from "@/lib/1v1/types";
+
+function BankHtml({ html }: { html: string | null }) {
+  if (!html) {
+    return null;
+  }
+  const parts = html.split(
+    /(\$\$[\s\S]+?\$\$)|(\$[^$]+\$)|(\\\[[\s\S]+?\\\])|(\\\([\s\S]+?\\\))/g,
+  );
+  return (
+    <div className="[&_img]:my-2 [&_img]:max-h-48 [&_img]:max-w-full">
+      {parts.map((part, i) => {
+        if (!part) {
+          return null;
+        }
+        if (part.startsWith("$$") && part.endsWith("$$")) {
+          return <BlockMath key={i}>{part.slice(2, -2)}</BlockMath>;
+        }
+        if (part.startsWith("\\[") && part.endsWith("\\]")) {
+          return <BlockMath key={i}>{part.slice(2, -2)}</BlockMath>;
+        }
+        if (part.startsWith("\\(") && part.endsWith("\\)")) {
+          return <InlineMath key={i}>{part.slice(2, -2)}</InlineMath>;
+        }
+        if (part.startsWith("$") && part.endsWith("$")) {
+          return <InlineMath key={i}>{part.slice(1, -1)}</InlineMath>;
+        }
+        return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
+      })}
+    </div>
+  );
+}
 
 export default function DuelMatchPage() {
   const params = useParams<{ code: string }>();
@@ -10,10 +43,30 @@ export default function DuelMatchPage() {
   const [match, setMatch] = useState<PublicMatch | null>(null);
   const [error, setError] = useState("");
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [takeover, setTakeover] = useState(false);
+  const prevOrder = useRef<string[]>([]);
 
   useEffect(() => {
     setPlayerId(sessionStorage.getItem(`1v1:${code}:playerId`));
   }, [code]);
+
+  useEffect(() => {
+    if (!match || !playerId) {
+      return;
+    }
+    const order = [...match.players]
+      .sort((a, b) => b.score - a.score)
+      .map((p) => p.id);
+    const prevIdx = prevOrder.current.indexOf(playerId);
+    const nextIdx = order.indexOf(playerId);
+    if (prevIdx > 0 && nextIdx === 0) {
+      setTakeover(true);
+      const t = window.setTimeout(() => setTakeover(false), 1600);
+      prevOrder.current = order;
+      return () => window.clearTimeout(t);
+    }
+    prevOrder.current = order;
+  }, [match, playerId]);
 
   useEffect(() => {
     if (!code) {
@@ -80,6 +133,8 @@ export default function DuelMatchPage() {
 
   const me = match.players.find((p) => p.id === playerId);
   const already = playerId ? Boolean(match.answers[playerId]) : false;
+  const roundOver = match.correctOptionId !== null;
+  const board = [...match.players].sort((a, b) => b.score - a.score);
 
   if (match.status === "waiting") {
     return (
@@ -129,23 +184,58 @@ export default function DuelMatchPage() {
           {match.players.map((p) => `${p.name} ${p.score}`).join(" · ")}
         </span>
       </div>
-      <div className="mb-6 text-xl">{q.text}</div>
+      <div className="mb-6 text-xl">
+        <BankHtml html={q.text} />
+        {q.image ? (
+          <img src={q.image} alt="" className="mt-3 max-h-48 max-w-full" />
+        ) : null}
+      </div>
       <div className="flex flex-col gap-3">
         {q.options.map((opt) => (
           <button
             key={opt.id}
             className="border px-4 py-3 text-left disabled:opacity-50"
-            disabled={!playerId || already || !me}
+            disabled={!playerId || already || !me || roundOver}
             onClick={() => answer(opt.id)}
           >
-            {opt.text}
+            <BankHtml html={opt.text} />
+            {opt.image ? (
+              <img src={opt.image} alt="" className="mt-2 max-h-32 max-w-full" />
+            ) : null}
           </button>
         ))}
       </div>
+      {roundOver ? (
+        <div className="mt-8">
+          {takeover ? (
+            <p className="mb-3 text-lg font-bold text-[#078859]">Takeover</p>
+          ) : null}
+          <h2 className="text-lg font-semibold">Leaderboard</h2>
+          <ol className="mt-3 flex flex-col gap-2">
+            {board.map((p, i) => (
+              <li
+                key={p.id}
+                className={`flex justify-between border px-3 py-2 transition-transform duration-500 ${
+                  takeover && p.id === playerId
+                    ? "-translate-y-2 bg-[#078859] text-white"
+                    : ""
+                }`}
+              >
+                <span>
+                  {i + 1}. {p.name}
+                </span>
+                <span>{p.score}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
       {!playerId ? (
         <p className="mt-4 text-red-600">Join from the 1v1 page first.</p>
       ) : null}
-      {already ? <p className="mt-4">Waiting for this round to finish.</p> : null}
+      {already && !roundOver ? (
+        <p className="mt-4">Waiting for this round to finish.</p>
+      ) : null}
     </main>
   );
 }
