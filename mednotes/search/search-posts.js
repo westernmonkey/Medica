@@ -46,6 +46,8 @@ function searchPosts(options) {
       tags: post.tags || [],
       hasImage: post.hasImage,
       hasVoice: post.hasVoice,
+      imagePath: post.imagePath || null,
+      voicePath: post.voicePath || null,
       createdAt: post.createdAt,
       score: score,
     });

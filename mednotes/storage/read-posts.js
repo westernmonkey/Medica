@@ -40,12 +40,18 @@ function readOnePost(postId, workingRoot) {
     vectorBytes.byteOffset,
     vectorBytes.byteLength / 4
   );
+  const imagePath = path.join(postDir, "image.jpg");
+  const voicePath = path.join(postDir, "voice.webm");
+  const hasImage = fs.existsSync(imagePath);
+  const hasVoice = fs.existsSync(voicePath);
   return {
     id: postId,
     text: text,
     vector: vector,
-    hasImage: fs.existsSync(path.join(postDir, "image.jpg")),
-    hasVoice: fs.existsSync(path.join(postDir, "voice.webm")),
+    hasImage: hasImage,
+    hasVoice: hasVoice,
+    imagePath: hasImage ? imagePath : null,
+    voicePath: hasVoice ? voicePath : null,
     tags: readTags(postDir),
     createdAt: parseCreatedAtFromId(postId),
   };

@@ -218,6 +218,7 @@ async function run() {
   });
 
   const backupPath = path.join(tmpRoot, "backup.enc");
+  await window.click(".backup summary");
   await window.fill("#backup-password", BACKUP_PASSWORD);
   keyPressCount += BACKUP_PASSWORD.length;
   window.once("dialog", async function onBackupAlert(dialog) {
