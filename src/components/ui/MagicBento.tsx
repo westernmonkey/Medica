@@ -24,42 +24,48 @@ export interface BentoProps {
   enableMagnetism?: boolean;
 }
 
-const DEFAULT_PARTICLE_COUNT = 12;
-const DEFAULT_SPOTLIGHT_RADIUS = 900;
+const DEFAULT_PARTICLE_COUNT = 24;
+const DEFAULT_SPOTLIGHT_RADIUS = 1200;
 const DEFAULT_GLOW_COLOR = '255, 255, 255';
 const MOBILE_BREAKPOINT = 768;
 
 const cardData: BentoCardProps[] = [
   {
     color: '#2E8B57',
-    description: 'Plan',
-    label: 'Smart Planner'
+    title: 'Plan the next study block without guessing.',
+    description: 'Dashboard-first workflow for organizing med-school tasks, topics, and what to review next.',
+    label: 'Command Centre'
   },
   {
     color: '#06402B',
-    description: 'View questions from Physiology, Anatomy and many more',
-    label :'Quiz Centre'
+    title: 'Practice across your core subjects.',
+    description: 'Question bank coverage for physiology, anatomy, and the rest of the curriculum you are building.',
+    label: 'Question Bank'
   },
   {
     color: '#06402B',
-    description: 'Test your diagnostic skills with interactive, step-by-step patient cases.',
-    label:'Clinical Cases',
+    title: 'Think through patients one step at a time.',
+    description: 'Interactive clinical cases for sharpening diagnostic reasoning instead of memorizing in isolation.',
+    label: 'Clinical Cases',
   },
   {
     color: '#06402B',
-    description: 'Player game ',
-    label:'Live topic quiz duels',
+    title: 'Challenge a friend in a live room.',
+    description: '1v1 quiz duels with room codes, live answering, and quick competitive review.',
+    label: '1v1 Duels',
 
   },
   {
     color: '#06402B',
-    description: 'Finding Resources',
-    label:'Resource Finder',
+    title: 'Find the right learning resource faster.',
+    description: 'A lightweight resource finder for turning broad topics into useful study material.',
+    label: 'Resource Finder',
   },
   {
     color: '#2E8B57',
-    description: 'Summarize your notes',
-    label:'Summarize',
+    title: 'Capture notes locally on desktop.',
+    description: 'MedNotes saves text, photos, voice notes, tags, and semantic-search vectors on your machine.',
+    label: 'MedNotes Desktop',
   }
 ];
 
@@ -68,11 +74,11 @@ const createParticleElement = (x: number, y: number, color: string = DEFAULT_GLO
   el.className = 'particle';
   el.style.cssText = `
     position: absolute;
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: rgba(${color}, 1);
-    box-shadow: 0 0 10px rgba(${color},1.0);
+    box-shadow: 0 0 18px rgba(${color},1.0), 0 0 34px rgba(${color},0.65);
     pointer-events: none;
     z-index: 100;
     left: ${x}px;
@@ -173,18 +179,18 @@ const ParticleCard: React.FC<{
         gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.7)' });
 
         gsap.to(clone, {
-          x: (Math.random() - 0.5) * 100,
-          y: (Math.random() - 0.5) * 100,
+          x: (Math.random() - 0.5) * 170,
+          y: (Math.random() - 0.5) * 170,
           rotation: Math.random() * 360,
-          duration: 2 + Math.random() * 2,
+          duration: 1.4 + Math.random() * 1.6,
           ease: 'none',
           repeat: -1,
           yoyo: true
         });
 
         gsap.to(clone, {
-          opacity: 0.3,
-          duration: 1.5,
+          opacity: 0.15,
+          duration: 0.9,
           ease: 'power2.inOut',
           repeat: -1,
           yoyo: true
@@ -367,16 +373,16 @@ const GlobalSpotlight: React.FC<{
     spotlight.className = 'global-spotlight';
     spotlight.style.cssText = `
       position: fixed;
-      width: 800px;
-      height: 800px;
+      width: 1000px;
+      height: 1000px;
       border-radius: 50%;
       pointer-events: none;
       background: radial-gradient(circle,
-        rgba(${glowColor}, 0.15) 0%,
-        rgba(${glowColor}, 0.08) 15%,
-        rgba(${glowColor}, 0.04) 25%,
-        rgba(${glowColor}, 0.02) 40%,
-        rgba(${glowColor}, 0.01) 65%,
+        rgba(${glowColor}, 0.28) 0%,
+        rgba(${glowColor}, 0.18) 15%,
+        rgba(${glowColor}, 0.1) 30%,
+        rgba(${glowColor}, 0.05) 48%,
+        rgba(${glowColor}, 0.02) 68%,
         transparent 70%
       );
       z-index: 200;
@@ -443,9 +449,9 @@ const GlobalSpotlight: React.FC<{
 
       const targetOpacity =
         minDistance <= proximity
-          ? 0.8
+          ? 1
           : minDistance <= fadeDistance
-            ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.8
+            ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 1
             : 0;
 
       gsap.to(spotlightRef.current, {
@@ -487,8 +493,8 @@ const BentoCardGrid: React.FC<{
   gridRef?: React.RefObject<HTMLDivElement | null>;
 }> = ({ children, gridRef }) => (
   <div
-    className="bento-section grid gap-2 p-3 max-w-[54rem] select-none relative"
-    style={{ fontSize: 'clamp(1rem, 0.9rem + 0.5vw, 1.5rem)' }}
+    className="bento-section grid gap-4 p-4 max-w-[72rem] w-full select-none relative"
+    style={{ fontSize: 'clamp(1.05rem, 0.95rem + 0.7vw, 1.65rem)' }}
     ref={gridRef}
   >
     {children}
@@ -547,9 +553,9 @@ const MagicBento: React.FC<BentoProps> = ({
           
           .card-responsive {
             grid-template-columns: 1fr;
-            width: 90%;
+            width: min(100%, 70rem);
             margin: 0 auto;
-            padding: 0.5rem;
+            padding: 0.75rem;
           }
           
           @media (min-width: 600px) {
@@ -585,8 +591,8 @@ const MagicBento: React.FC<BentoProps> = ({
             inset: 0;
             padding: 6px;
             background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-                rgba(${glowColor}, calc(var(--glow-intensity) * 0.8)) 0%,
-                rgba(${glowColor}, calc(var(--glow-intensity) * 0.4)) 30%,
+                rgba(${glowColor}, calc(var(--glow-intensity) * 1)) 0%,
+                rgba(${glowColor}, calc(var(--glow-intensity) * 0.65)) 32%,
                 transparent 60%);
             border-radius: inherit;
             mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -603,7 +609,7 @@ const MagicBento: React.FC<BentoProps> = ({
           }
           
           .card--border-glow:hover {
-            box-shadow: 0 4px 20px rgba(46, 24, 78, 0.4), 0 0 30px rgba(${glowColor}, 0.2);
+            box-shadow: 0 14px 45px rgba(4, 21, 15, 0.38), 0 0 55px rgba(${glowColor}, 0.42), inset 0 0 24px rgba(${glowColor}, 0.14);
           }
           
           .particle::before {
@@ -619,7 +625,7 @@ const MagicBento: React.FC<BentoProps> = ({
           }
           
           .particle-container:hover {
-            box-shadow: 0 4px 20px rgba(46, 24, 78, 0.2), 0 0 30px rgba(${glowColor}, 0.2);
+            box-shadow: 0 14px 45px rgba(4, 21, 15, 0.32), 0 0 60px rgba(${glowColor}, 0.38);
           }
           
           .text-clamp-1 {
@@ -634,8 +640,8 @@ const MagicBento: React.FC<BentoProps> = ({
           .text-clamp-2 {
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
             overflow: hidden;
             text-overflow: ellipsis;
           }
@@ -643,14 +649,14 @@ const MagicBento: React.FC<BentoProps> = ({
           @media (max-width: 599px) {
             .card-responsive {
               grid-template-columns: 1fr;
-              width: 90%;
+              width: 100%;
               margin: 0 auto;
               padding: 0.5rem;
             }
             
             .card-responsive .card {
               width: 100%;
-              min-height: 180px;
+              min-height: 220px;
             }
           }
         `}
@@ -667,9 +673,9 @@ const MagicBento: React.FC<BentoProps> = ({
       )}
 
       <BentoCardGrid gridRef={gridRef}>
-        <div className="card-responsive grid gap-2">
+        <div className="card-responsive grid gap-4">
           {cardData.map((card, index) => {
-            const baseClassName = `card flex flex-col justify-between relative aspect-[4/3] min-h-[200px] w-full max-w-full p-5 rounded-[20px] border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
+            const baseClassName = `card flex flex-col justify-between relative aspect-[16/11] min-h-[260px] w-full max-w-full p-7 rounded-[24px] border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_16px_45px_rgba(0,0,0,0.22)] ${
               enableBorderGlow ? 'card--border-glow' : ''
             }`;
 
@@ -697,14 +703,14 @@ const MagicBento: React.FC<BentoProps> = ({
                   enableMagnetism={enableMagnetism}
                 >
                   <div className="card__header flex justify-between gap-3 relative text-white">
-                    <span className="card__label text-base">{card.label}</span>
+                    <span className="card__label text-lg font-medium">{card.label}</span>
                   </div>
                   <div className="card__content flex flex-col relative text-white">
-                    <h3 className={`card__title font-normal text-base m-0 mb-1 ${textAutoHide ? 'text-clamp-1' : ''}`}>
+                    <h3 className={`card__title font-semibold text-2xl leading-tight m-0 mb-2 ${textAutoHide ? 'text-clamp-2' : ''}`}>
                       {card.title}
                     </h3>
                     <p
-                      className={`card__description text-xs leading-5 opacity-90 ${textAutoHide ? 'text-clamp-2' : ''}`}
+                      className={`card__description text-sm leading-6 opacity-90 ${textAutoHide ? 'text-clamp-2' : ''}`}
                     >
                       {card.description}
                     </p>
@@ -829,13 +835,13 @@ const MagicBento: React.FC<BentoProps> = ({
                 }}
               >
                 <div className="card__header flex justify-between gap-3 relative text-white">
-                  <span className="card__label text-base">{card.label}</span>
+                  <span className="card__label text-lg font-medium">{card.label}</span>
                 </div>
                 <div className="card__content flex flex-col relative text-white">
-                  <h3 className={`card__title font-normal text-base m-0 mb-1 ${textAutoHide ? 'text-clamp-1' : ''}`}>
+                  <h3 className={`card__title font-semibold text-2xl leading-tight m-0 mb-2 ${textAutoHide ? 'text-clamp-2' : ''}`}>
                     {card.title}
                   </h3>
-                  <p className={`card__description text-xs leading-5 opacity-90 ${textAutoHide ? 'text-clamp-2' : ''}`}>
+                  <p className={`card__description text-sm leading-6 opacity-90 ${textAutoHide ? 'text-clamp-2' : ''}`}>
                     {card.description}
                   </p>
                 </div>

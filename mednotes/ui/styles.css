@@ -35,7 +35,7 @@ h2 { font-size: var(--panel-heading); font-weight: var(--bold); }
 .top, .brand, .backup-box, .panel-heading, .heading-label, .composer-toolbar, .capture-actions, .dialog-heading { display: flex; align-items: center; gap: var(--s2); }
 .top { justify-content: space-between; margin-bottom: var(--s6); gap: var(--s4); }
 .brand { gap: var(--s4); }
-.medica-logo { display: block; width: var(--logo); height: auto; }
+.medica-logo { display: block; width: var(--logo); height: 32px; }
 .brand-divider { width: var(--border); height: var(--s6); background: var(--line-hover); }
 #open-search { display: flex; align-items: center; gap: var(--s2); background: var(--panel); }
 kbd { font: var(--medium) var(--caption) var(--font); color: var(--muted); background: var(--raised); border: var(--border) solid var(--line); border-radius: var(--r1); padding: 0 var(--s1); }

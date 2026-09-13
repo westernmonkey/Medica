@@ -39,13 +39,6 @@ export default function MedNotesPage() {
       />
 
       <section className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
-        <p
-          className={`mb-4 text-xs font-semibold uppercase tracking-[0.35em] text-[#7dceb0] transition-all duration-700 ${
-            pulse ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
-        >
-          Medica Desktop
-        </p>
 
         <h1
           className={`font-serif text-6xl font-semibold tracking-tight text-white sm:text-7xl md:text-8xl transition-all duration-700 delay-100 ${

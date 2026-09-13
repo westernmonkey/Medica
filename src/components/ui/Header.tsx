@@ -34,7 +34,7 @@ export default function Header() {
             1v1
           </Link>
           <Button asChild variant="ghost">
-            <Link href="/mednotes">MedNotes</Link>
+            <Link href="/mednotes">Download App</Link>
           </Button>
           {user ? (
             // If user is logged in
