@@ -1,17 +1,12 @@
 /**
  * Reasoning: End-to-end click counting proves the composer path is short. Real
- * Playwright drives Electron so media, prompts, and save dialogs behave like a
- * user session. Backup decrypt is checked here with the exported file bytes.
+ * Playwright drives Electron so media and prompts behave like a user session.
  */
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const assert = require("assert/strict");
 const { _electron: electron } = require("playwright");
-const {
-  decryptBackupBuffer,
-  exportBackup,
-} = require("../backup/export-backup");
 
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "mednotes-e2e-"));
 const fixtureDir = path.join(tmpRoot, "fixtures");
@@ -39,8 +34,6 @@ fs.writeFileSync(
 );
 
 const NOTE_TEXT = "E2E note: dyspnea differential includes PE and pneumonia.";
-const BACKUP_PASSWORD = "correct-horse-battery";
-const WRONG_PASSWORD = "wrong-password";
 
 function printTable(rows) {
   console.log("");
@@ -73,7 +66,6 @@ async function run() {
     ],
     env: Object.assign({}, process.env, {
       MEDNOTES_HOME: tmpRoot,
-      MEDNOTES_BACKUP_PATH: path.join(tmpRoot, "backup.enc"),
     }),
   });
 
@@ -217,47 +209,6 @@ async function run() {
     pass: voiceOk,
   });
 
-  const backupPath = path.join(tmpRoot, "backup.enc");
-  await window.click(".backup summary");
-  await window.fill("#backup-password", BACKUP_PASSWORD);
-  keyPressCount += BACKUP_PASSWORD.length;
-  window.once("dialog", async function onBackupAlert(dialog) {
-    await dialog.accept();
-  });
-  await countedClick("#export-backup-btn");
-
-  const startBackup = Date.now();
-  while (!fs.existsSync(backupPath) && Date.now() - startBackup < 30000) {
-    await window.waitForTimeout(200);
-  }
-  assert.ok(fs.existsSync(backupPath), "backup file was not written");
-
-  const packed = fs.readFileSync(backupPath);
-  let decryptOk = false;
-  let wrongFails = false;
-  try {
-    const unzipped = await decryptBackupBuffer(packed, BACKUP_PASSWORD);
-    decryptOk = unzipped.length > 0 && unzipped[0] === 0x50 && unzipped[1] === 0x4b;
-  } catch (err) {
-    decryptOk = false;
-  }
-  try {
-    await decryptBackupBuffer(packed, WRONG_PASSWORD);
-    wrongFails = false;
-  } catch (err) {
-    wrongFails = true;
-  }
-  rows.push({
-    name: "backup_decrypt_correct_password",
-    measured: decryptOk ? "ok" : "fail",
-    pass: decryptOk,
-  });
-  rows.push({
-    name: "backup_decrypt_wrong_password",
-    measured: wrongFails ? "throws" : "accepted",
-    pass: wrongFails,
-  });
-
   // Direct API check for edit dual-write (storage already unit-tested; confirm live folders)
   process.env.MEDNOTES_HOME = tmpRoot;
   const { editPost } = require("../storage/edit-post");
@@ -292,11 +243,6 @@ async function run() {
 
   await shutdownEmbeddingWorker();
   await electronApp.close();
-
-  // Keep a pure-node backup encrypt path exercised too
-  const altBackup = path.join(tmpRoot, "alt.enc");
-  await exportBackup(BACKUP_PASSWORD, altBackup);
-  assert.ok(fs.existsSync(altBackup));
 
   if (!allPass) {
     process.exitCode = 1;

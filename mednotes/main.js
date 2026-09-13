@@ -1,9 +1,9 @@
 /**
  * Reasoning: Electron needs one main-process entry that creates the window and
- * wires IPC. Disk, embedding, search, tags, and backup stay out of this file so
+ * wires IPC. Disk, embedding, search, and tags stay out of this file so
  * each can be tested without launching a window.
  */
-const { app, BrowserWindow, ipcMain, dialog, session } = require("electron");
+const { app, BrowserWindow, ipcMain, session } = require("electron");
 const path = require("path");
 
 const { savePost } = require("./storage/save-post");
@@ -12,7 +12,6 @@ const { deletePost } = require("./storage/delete-post");
 const { readPosts } = require("./storage/read-posts");
 const { searchPosts } = require("./search/search-posts");
 const { addTagToPost, listTagsForPost } = require("./tags/tag-store");
-const { exportBackup } = require("./backup/export-backup");
 const { embedTextAsync } = require("./embedding/embedding-worker");
 
 let mainWindow = null;
@@ -93,23 +92,6 @@ function registerIpcHandlers() {
     return listTagsForPost(id);
   });
 
-  ipcMain.handle("export-backup", async function handleExportBackup(_event, password) {
-    const forcedPath = process.env.MEDNOTES_BACKUP_PATH;
-    let destination = forcedPath || null;
-    if (!destination) {
-      const result = await dialog.showSaveDialog(mainWindow, {
-        title: "Export MedNotes Backup",
-        defaultPath: "mednotes-backup.enc",
-        filters: [{ name: "Encrypted Backup", extensions: ["enc"] }],
-      });
-      if (result.canceled || !result.filePath) {
-        return { ok: false, canceled: true };
-      }
-      destination = result.filePath;
-    }
-    await exportBackup(password, destination);
-    return { ok: true, path: destination };
-  });
 }
 
 app.whenReady().then(async function onReady() {

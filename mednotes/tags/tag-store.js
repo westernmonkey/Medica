@@ -1,6 +1,6 @@
 /**
  * Reasoning: tags.json lives inside each post folder so a post stays self
- * contained when copied or restored from backup. Dual write keeps the mirror
+ * contained when copied. Dual write keeps the mirror
  * in sync with the working copy.
  */
 const fs = require("fs");

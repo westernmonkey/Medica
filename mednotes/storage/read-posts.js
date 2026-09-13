@@ -1,6 +1,6 @@
 /**
  * Reasoning: Search needs every vector in memory once at startup. Reading from
- * the working folder is enough; the mirror is a backup, not a second index.
+ * the working folder is enough; the mirror is not a second index.
  */
 const fs = require("fs");
 const path = require("path");

@@ -26,7 +26,4 @@ contextBridge.exposeInMainWorld("mednotes", {
   listTags: function listTags(id) {
     return ipcRenderer.invoke("list-tags", id);
   },
-  exportBackup: function exportBackup(password) {
-    return ipcRenderer.invoke("export-backup", password);
-  },
 });

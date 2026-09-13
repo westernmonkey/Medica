@@ -173,25 +173,6 @@ document.getElementById("search-form").addEventListener("submit", async event =>
   }
 });
 
-document.getElementById("export-backup-btn").addEventListener("click", function onExportClick() {
-  const passwordInput = document.getElementById("backup-password");
-  const password = passwordInput.value;
-  if (!password) {
-    alert("Enter a backup password first.");
-    passwordInput.focus();
-    return;
-  }
-  window.mednotes.exportBackup(password).then(function onExported(result) {
-    if (result.canceled) {
-      return;
-    }
-    passwordInput.value = "";
-    alert("Backup saved to " + result.path);
-  }).catch(function onExportError(err) {
-    alert(err.message);
-  });
-});
-
 refreshList().then(function afterInitialLoad() {
   composer.focus();
 }).catch(function onLoadError(err) {

@@ -13,8 +13,7 @@
     "test:ui": "node tests/test-ui-clicks.js"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.4.0",
-    "jszip": "^3.10.1"
+    "@huggingface/transformers": "^3.4.0"
   },
   "devDependencies": {
     "electron": "^38.0.0",

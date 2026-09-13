@@ -32,7 +32,7 @@ h1, h2, p { margin: 0; }
 h1 { font-size: var(--heading); font-weight: var(--bold); }
 h2 { font-size: var(--panel-heading); font-weight: var(--bold); }
 .shell { max-width: var(--content); margin: auto; padding: var(--s8) var(--s6); }
-.top, .brand, .backup-box, .panel-heading, .heading-label, .composer-toolbar, .capture-actions, .dialog-heading { display: flex; align-items: center; gap: var(--s2); }
+.top, .brand, .panel-heading, .heading-label, .composer-toolbar, .capture-actions, .dialog-heading { display: flex; align-items: center; gap: var(--s2); }
 .top { justify-content: space-between; margin-bottom: var(--s6); gap: var(--s4); }
 .brand { gap: var(--s4); }
 .medica-logo { display: block; width: var(--logo); height: 32px; }
@@ -85,9 +85,6 @@ kbd { font: var(--medium) var(--caption) var(--font); color: var(--muted); backg
 .empty { padding: var(--s6); text-align: center; color: var(--muted); font-size: var(--caption); }
 .empty-art { display: block; width: var(--empty-art); height: var(--empty-art); margin: 0 auto var(--s3); }
 .empty > span { display: block; font-size: var(--body); font-weight: var(--medium); color: var(--ink); margin-bottom: var(--s1); }
-.backup summary { cursor: pointer; color: var(--muted); font-size: var(--caption); }
-.backup-box { margin-top: var(--s3); flex-wrap: wrap; }
-#backup-password { flex: 1; }
 dialog { width: min(var(--modal), calc(100% - var(--s6) * 2)); max-height: var(--modal-height); padding: var(--s6); background: var(--panel); color: var(--ink); border: var(--border) solid var(--line-hover); border-radius: var(--r4); }
 dialog[open] { animation: enter var(--duration) var(--ease); }
 dialog::backdrop { background: var(--backdrop); }
@@ -128,7 +125,7 @@ dialog::backdrop { background: var(--backdrop); }
 .rail-link:hover { border-color: var(--lime); }
 .rail-footer { margin-top: auto; display: flex; gap: var(--s2); align-items: center; font-size: var(--caption); color: var(--mint); padding: var(--s2); }
 .shell { margin-left: var(--rail); padding: var(--s6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--s6); }
-.top, .list-wrap, .backup { grid-column: 1 / -1; }
+.top, .list-wrap { grid-column: 1 / -1; }
 .top { margin-bottom: 0; }
 .header-kicker { font-weight: var(--heavy); color: var(--accent); }
 .identity-panel { background: var(--accent); color: var(--panel); border-radius: var(--r4); padding: var(--s6); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
