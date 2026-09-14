@@ -1,0 +1,14 @@
+{
+  "copyright": "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0; BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan; BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International; Cranial Nerves and Foramina - by University of Dundee, CAHID - CC-BY 4.0",
+  "method": "Decoded overview bounding boxes compared against evaluated source world-coordinate boxes after fitting one shared translation. Checks conversion displacement and gross extent only, not surface distance, tissue intersections or anatomical accuracy.",
+  "structures": 2790,
+  "translation": [
+    0,
+    0.8714788556098938,
+    -0.0013483315706253052
+  ],
+  "maxBoundingErrorMM": 1.3349950313568115,
+  "thresholdMM": 2,
+  "issues": [],
+  "anatomicalReview": "pending"
+}

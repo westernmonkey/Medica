@@ -1,0 +1,40 @@
+{
+  "copyright": "MIT; dependency licenses as listed",
+  "packages": [
+    {
+      "name": "@gltf-transform/core",
+      "version": "4.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@gltf-transform/extensions",
+      "version": "4.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "property-graph",
+      "version": "3.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "ktx-parse",
+      "version": "1.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "draco3dgltf",
+      "version": "1.5.7",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "meshoptimizer",
+      "version": "0.22.0",
+      "license": "MIT"
+    },
+    {
+      "name": "three",
+      "version": "0.172.0",
+      "license": "MIT"
+    }
+  ]
+}

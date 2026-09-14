@@ -1,0 +1,364 @@
+{
+  "startup": {
+    "testid": "anatomy-canvas",
+    "drawCalls": "1",
+    "triangles": "766415",
+    "renderFrames": "3",
+    "loadedSystems": "1",
+    "firstInteractiveMs": "1104",
+    "geometries": "1",
+    "textures": "1"
+  },
+  "exterior": {
+    "testid": "anatomy-canvas",
+    "drawCalls": "1",
+    "triangles": "132764",
+    "renderFrames": "30",
+    "loadedSystems": "11",
+    "firstInteractiveMs": "1104",
+    "geometries": "12",
+    "textures": "1"
+  },
+  "all": {
+    "testid": "anatomy-canvas",
+    "drawCalls": "28",
+    "triangles": "4560282",
+    "renderFrames": "31",
+    "loadedSystems": "11",
+    "firstInteractiveMs": "1104",
+    "geometries": "12",
+    "textures": "1"
+  },
+  "board": {
+    "testid": "anatomy-canvas",
+    "drawCalls": "28",
+    "triangles": "65392",
+    "renderFrames": "33",
+    "loadedSystems": "11",
+    "firstInteractiveMs": "1104",
+    "geometries": "12",
+    "textures": "1",
+    "study": "true",
+    "explode": "1",
+    "visibleTiles": "28"
+  },
+  "layouts": [
+    {
+      "width": 960,
+      "top": 625.5,
+      "bottom": 720,
+      "height": 720,
+      "overflow": false,
+      "metrics": {
+        "testid": "anatomy-canvas",
+        "drawCalls": "12",
+        "triangles": "33090",
+        "renderFrames": "37",
+        "loadedSystems": "11",
+        "firstInteractiveMs": "1104",
+        "geometries": "12",
+        "textures": "1",
+        "study": "true",
+        "explode": "1",
+        "visibleTiles": "12"
+      }
+    },
+    {
+      "width": 395,
+      "top": 701.5625,
+      "bottom": 844,
+      "height": 844,
+      "overflow": false,
+      "metrics": {
+        "testid": "anatomy-canvas",
+        "drawCalls": "4",
+        "triangles": "10728",
+        "renderFrames": "38",
+        "loadedSystems": "11",
+        "firstInteractiveMs": "1104",
+        "geometries": "12",
+        "textures": "1",
+        "study": "true",
+        "explode": "1",
+        "visibleTiles": "4"
+      }
+    }
+  ],
+  "memory": {
+    "usedJSHeapSize": 322000000,
+    "totalJSHeapSize": 462000000
+  },
+  "frames": {
+    "medianMs": 16.69999999999709,
+    "p95Ms": 16.700000000000728,
+    "maxMs": 16.799999999999272
+  },
+  "resources": [
+    {
+      "name": "http://127.0.0.1:3100/_next/static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2",
+      "encodedBodySize": 7848,
+      "transferSize": 8148,
+      "duration": 8.199999988079071
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/media/4b766aa38fdaaae3-s.p.11-gljxdt344a.woff2",
+      "encodedBodySize": 7600,
+      "transferSize": 7900,
+      "duration": 8
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2",
+      "encodedBodySize": 7740,
+      "transferSize": 8040,
+      "duration": 7.199999988079071
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2",
+      "encodedBodySize": 7900,
+      "transferSize": 8200,
+      "duration": 7.300000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/media/c875c6f5d3e977ac-s.p.1h18_wedhzk4h.woff2",
+      "encodedBodySize": 7844,
+      "transferSize": 8144,
+      "duration": 7.300000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/src_components_anatomy-final_anatomy-final_02g8ge3.css",
+      "encodedBodySize": 3426,
+      "transferSize": 3726,
+      "duration": 11.300000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/%5Broot-of-the-server%5D__1x4nbs6._.css",
+      "encodedBodySize": 6989,
+      "transferSize": 7289,
+      "duration": 12.800000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_1di75ot._.js",
+      "encodedBodySize": 594,
+      "transferSize": 894,
+      "duration": 11
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-6._.js",
+      "encodedBodySize": 32189,
+      "transferSize": 32489,
+      "duration": 19.899999976158142
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js",
+      "encodedBodySize": 27006,
+      "transferSize": 27306,
+      "duration": 22.19999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js",
+      "encodedBodySize": 33043,
+      "transferSize": 33343,
+      "duration": 24.100000023841858
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js",
+      "encodedBodySize": 184506,
+      "transferSize": 184806,
+      "duration": 60.89999997615814
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_client_0_90u2t._.js",
+      "encodedBodySize": 192396,
+      "transferSize": 192696,
+      "duration": 61.60000002384186
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jm.js",
+      "encodedBodySize": 249959,
+      "transferSize": 250259,
+      "duration": 64.39999997615814
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/_1anvha4._.js",
+      "encodedBodySize": 834,
+      "transferSize": 1134,
+      "duration": 27
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqw._.js",
+      "encodedBodySize": 740,
+      "transferSize": 1040,
+      "duration": 27.19999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/_0jff_qu._.js",
+      "encodedBodySize": 654,
+      "transferSize": 954,
+      "duration": 31.19999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/turbopack-_08bm286._.js",
+      "encodedBodySize": 26049,
+      "transferSize": 26349,
+      "duration": 33.19999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/src_1x4j5ks._.js",
+      "encodedBodySize": 3218,
+      "transferSize": 3518,
+      "duration": 35.40000003576279
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/src_components_anatomy-final_0s-8_0o._.js",
+      "encodedBodySize": 19908,
+      "transferSize": 20208,
+      "duration": 41.5
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_0p5k-42._.js",
+      "encodedBodySize": 72404,
+      "transferSize": 72704,
+      "duration": 48.69999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_three_build_three_core_18d0oq6.js",
+      "encodedBodySize": 164101,
+      "transferSize": 164401,
+      "duration": 83
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_three_examples_jsm_01sz152._.js",
+      "encodedBodySize": 43273,
+      "transferSize": 43573,
+      "duration": 74.30000001192093
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/node_modules_three_build_three_module_03rsyo6.js",
+      "encodedBodySize": 111960,
+      "transferSize": 112260,
+      "duration": 80.59999996423721
+    },
+    {
+      "name": "http://127.0.0.1:3100/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_1mojsay._.js",
+      "encodedBodySize": 3876,
+      "transferSize": 4176,
+      "duration": 3.099999964237213
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/manifest.json",
+      "encodedBodySize": 0,
+      "transferSize": 0,
+      "duration": 4.800000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/manifest.json",
+      "encodedBodySize": 137883,
+      "transferSize": 138183,
+      "duration": 20.5
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/skeletal.glb",
+      "encodedBodySize": 2818026,
+      "transferSize": 2818326,
+      "duration": 360.5
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/decoder/draco_wasm_wrapper.js",
+      "encodedBodySize": 11748,
+      "transferSize": 12048,
+      "duration": 8.200000047683716
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/decoder/draco_decoder.wasm",
+      "encodedBodySize": 63458,
+      "transferSize": 63758,
+      "duration": 19.69999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/nervous.glb",
+      "encodedBodySize": 2243337,
+      "transferSize": 2243637,
+      "duration": 90.29999995231628
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/muscular.glb",
+      "encodedBodySize": 6056758,
+      "transferSize": 6057058,
+      "duration": 220.30000001192093
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/respiratory.glb",
+      "encodedBodySize": 414680,
+      "transferSize": 414980,
+      "duration": 18.19999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/lymphatic.glb",
+      "encodedBodySize": 348523,
+      "transferSize": 348823,
+      "duration": 16.5
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/circulatory.glb",
+      "encodedBodySize": 4009442,
+      "transferSize": 4009742,
+      "duration": 294.69999998807907
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/digestive.glb",
+      "encodedBodySize": 576923,
+      "transferSize": 577223,
+      "duration": 27.899999976158142
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/urinary.glb",
+      "encodedBodySize": 52592,
+      "transferSize": 52892,
+      "duration": 7.399999976158142
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/detail-skeletal-head.glb",
+      "encodedBodySize": 817449,
+      "transferSize": 817749,
+      "duration": 31.899999976158142
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/reproductive.glb",
+      "encodedBodySize": 50908,
+      "transferSize": 51208,
+      "duration": 5.800000011920929
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/endocrine.glb",
+      "encodedBodySize": 37074,
+      "transferSize": 37374,
+      "duration": 3.699999988079071
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/integumentary.glb",
+      "encodedBodySize": 490716,
+      "transferSize": 491016,
+      "duration": 19.600000023841858
+    },
+    {
+      "name": "http://127.0.0.1:3100/anatomy-final/atlas/detail-skeletal-thorax.glb",
+      "encodedBodySize": 1217743,
+      "transferSize": 1218043,
+      "duration": 45.30000001192093
+    }
+  ],
+  "errors": [],
+  "checks": [
+    "11 systems",
+    "system-only views",
+    "mandible detail",
+    "keyboard search",
+    "board reversal and position restoration",
+    "395px board and persistent credits",
+    "reduced motion",
+    "idle rendering stops",
+    "range 206",
+    "load failure retry",
+    "route disposal"
+  ]
+}

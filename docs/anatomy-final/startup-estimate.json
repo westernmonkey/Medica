@@ -1,0 +1,48 @@
+{
+  "copyright": "MIT performance report; asset notices retained separately",
+  "context": "Next development server, headless Chromium with ANGLE Metal on Apple M4, viewport simulation only, not a physical mobile benchmark",
+  "modelManifestDecoderBytesConservative": 5421600,
+  "at10MbpsTransferSeconds": 4.33728,
+  "localFirstInteractiveMs": "1104",
+  "approxSecondsPlusLocalInitialization": 5.44128,
+  "limitation": "Excludes production application JS/CSS/font transfer (development bundles not representative); includes all decoder variants conservatively. Not an end-to-end production startup promise. HTTP 206 checked locally; deployed host untested.",
+  "measurements": [
+    {
+      "width": 1280,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "median": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182,
+      "metrics": {
+        "testid": "anatomy-canvas",
+        "drawCalls": "28",
+        "triangles": "4560282",
+        "renderFrames": "143",
+        "loadedSystems": "11",
+        "firstInteractiveMs": "883",
+        "geometries": "11",
+        "textures": "1"
+      },
+      "heap": 322000000
+    },
+    {
+      "width": 395,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "median": 16.69999999999891,
+      "p95": 16.799999999999272,
+      "max": 16.80000000000109,
+      "metrics": {
+        "testid": "anatomy-canvas",
+        "drawCalls": "28",
+        "triangles": "4560282",
+        "renderFrames": "264",
+        "loadedSystems": "11",
+        "firstInteractiveMs": "883",
+        "geometries": "11",
+        "textures": "1"
+      },
+      "heap": 322000000
+    }
+  ],
+  "totalGLBBytes": 53717000
+}

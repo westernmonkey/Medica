@@ -1,0 +1,68 @@
+{
+  "copyright": "Registration measurements: MIT; input geometry under source licenses",
+  "method": "Global least-squares rigid rotation + uniform scale + translation fitted to bounding-box centers of shared bones; no per-organ warping. This is geometric validation, not anatomical review.",
+  "scale": 1.0188479708373204,
+  "rotation": [
+    [
+      0.9999998313804825,
+      -0.0005589982315006674,
+      -0.0001573530541992242
+    ],
+    [
+      0.0005596022059619096,
+      0.9999923749457952,
+      0.0038648280218953864
+    ],
+    [
+      0.00015519142234436315,
+      -0.003864915425326216,
+      0.9999925191442072
+    ]
+  ],
+  "translation": [
+    -0.0002906412256017356,
+    0.04588822823203409,
+    -0.10355468214504929
+  ],
+  "landmarks": [
+    {
+      "name": "left femur",
+      "residualMM": 3.1750595791848055
+    },
+    {
+      "name": "right femur",
+      "residualMM": 3.0519127248080276
+    },
+    {
+      "name": "left humerus",
+      "residualMM": 7.730812300845288
+    },
+    {
+      "name": "right humerus",
+      "residualMM": 8.153229899774574
+    },
+    {
+      "name": "mandible",
+      "residualMM": 6.252946200543113
+    },
+    {
+      "name": "frontal bone",
+      "residualMM": 6.9120032918354095
+    },
+    {
+      "name": "sacrum",
+      "residualMM": 14.612705301884814
+    },
+    {
+      "name": "left clavicle",
+      "residualMM": 8.463172229701318
+    },
+    {
+      "name": "right clavicle",
+      "residualMM": 8.098313451398553
+    }
+  ],
+  "rmsMM": 8.050190046896411,
+  "maxMM": 14.612705301884814,
+  "accepted": true
+}

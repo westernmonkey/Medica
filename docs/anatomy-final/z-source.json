@@ -1,0 +1,35 @@
+{
+  "revision": "b9c9f98066e1e786814603b047c5bd3638c2a864",
+  "url": "https://github.com/Z-Anatomy/Models-of-human-anatomy/tree/b9c9f98066e1e786814603b047c5bd3638c2a864",
+  "license": "CC-BY-SA-4.0 with inherited notices and explicit exclusions",
+  "files": [
+    {
+      "file": "source.zip",
+      "bytes": 86734957,
+      "sha256": "e029688545627bd0214b269e1063143abb580aad72b2c2445d6d8a9a0d9da736"
+    },
+    {
+      "file": "Startup.blend",
+      "bytes": 306838281,
+      "sha256": "9f08a17ea0115fed80b2a73ecdf0a1bc2ab2f6956f37c593ce23d513ea35afcd"
+    },
+    {
+      "file": "z-anatomy-license.txt",
+      "bytes": 2754,
+      "sha256": "196b66b56551a862e59872f7cdb70e6d9a6ad84e9105962fca8ec28c14e97520"
+    }
+  ],
+  "excludedRegions": [
+    "Z-Anatomy kidney (CC-BY-NC)",
+    "Z-Anatomy internal ear (CC-BY-NC-SA)",
+    "Brain and white-matter regions with unclear inherited rights"
+  ],
+  "imagesImported": [],
+  "modifications": [
+    "Evaluated geometry and curves; shared source transforms applied",
+    "Annotations and excluded regions removed",
+    "Source material boundaries and UVs preserved; original procedural shaders replaced by tissue palette",
+    "Overview simplified with boundary locking; regional detail unsimplified",
+    "Draco compression; anatomical review pending"
+  ]
+}

@@ -1,0 +1,33 @@
+Medica anatomy atlas — notices and modifications
+Viewer code: MIT. See licenses/Medica-MIT.txt. No source app code or definitions imported.
+
+Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0
+BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan
+Cranial Nerves and Foramina - by University of Dundee, CAHID - CC-BY 4.0
+Source: https://github.com/Z-Anatomy/Models-of-human-anatomy/tree/b9c9f98066e1e786814603b047c5bd3638c2a864
+Source author notices: licenses/Z-Anatomy-inherited-notices.txt
+Authors credited by source: Kousaku OKUBO (original BodyParts3D), Gauthier KERVYN (design, 3D, anatomy), and source contributors named in the inherited notice.
+Adapted Z-Anatomy geometry and metadata: CC-BY-SA 4.0. Inherited attribution retained.
+https://creativecommons.org/licenses/by-sa/4.0/
+https://creativecommons.org/licenses/by-sa/2.1/jp/
+https://creativecommons.org/licenses/by/4.0/
+
+Direct BodyParts3D replacement brain and kidneys:
+BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International
+https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
+https://creativecommons.org/licenses/by/4.0/
+These components retain CC-BY 4.0; combined downloadable GLBs containing adapted Z-Anatomy are offered under CC-BY-SA 4.0 with all source notices retained.
+
+Modifications: source transforms evaluated; annotations and restricted regions excluded; shared male coordinate frame; replacement brain/kidney global landmark registration; mesh fragments grouped; overview boundary-locked simplification; source-resolution regional detail; Draco encoding; tissue recoloring. UVs retained when present. No source raster texture, Wikipedia definition, add-on, or app script imported. Decorative muscle shader is not validated fibre orientation.
+
+Excluded: inner ear (Dundee, CC-BY-NC-SA 4.0), kidney (Lissie Cowley, CC-BY-NC 4.0), unclear Brainder/white-matter regions. Upstream source archive contains excluded assets and is NOT a cleared commercial asset bundle. Our downloads contain only the selected export. No assertion of complete anatomy or clinical/commercial validation.
+
+Runtime: Three.js, OrbitControls, GLTFLoader, DRACOLoader wrapper, BufferGeometryUtils, RoomEnvironment — MIT (licenses/Three-LICENSE.txt).
+Draco codec — Apache-2.0 (licenses/Draco-LICENSE.txt).
+React / ReactDOM — MIT (licenses/React-LICENSE.txt).
+Next.js — MIT (licenses/Next-LICENSE.txt).
+Site icons Lucide — ISC (licenses/Lucide-LICENSE.txt). Poppins — OFL (licenses/Poppins-OFL.txt).
+Build tooling: glTF-Transform, meshoptimizer — MIT; Draco Apache-2.0. Complete installed-tool notices: licenses/Tooling-LICENSES.txt.
+Blender 5.1.1 — GPL offline authoring tool, not distributed as part of this app.
+Tests: Playwright — Apache-2.0; TypeScript — Apache-2.0.
+All adapted GLBs, canonical metadata, coverage and provenance are downloadable at downloads.html. No access restriction or DRM applied.

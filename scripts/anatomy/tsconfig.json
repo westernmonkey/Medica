@@ -1,0 +1,7 @@
+/* MIT configuration; checks the MIT anatomy route and its licensed dependencies. */
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["../../src/components/anatomy-final/**/*.ts", "../../src/components/anatomy-final/**/*.tsx", "../../src/app/anatomy-final/page.tsx"],
+  "exclude": ["../../node_modules"]
+}
