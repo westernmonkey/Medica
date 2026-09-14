@@ -11,7 +11,8 @@
     "anatomy:audit": "node scripts/anatomy/audit.mjs",
     "anatomy:test": "node scripts/anatomy/verify.cjs",
     "anatomy:fetch": "node scripts/anatomy/fetch.mjs",
-    "anatomy:check": "tsc -p scripts/anatomy/tsconfig.json --noEmit && node --test scripts/anatomy/study.test.cjs"
+    "anatomy:check": "tsc -p scripts/anatomy/tsconfig.json --noEmit && node --test scripts/anatomy/study.test.cjs scripts/anatomy/transition.test.cjs",
+    "anatomy:test-transition": "node scripts/anatomy/verify-transition.cjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",

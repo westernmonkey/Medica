@@ -5,6 +5,7 @@ import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.j
 import {SystemLoader} from './loader';
 import {partAtTriangle} from './explode';
 import {visibleTiles} from './study-layout';
+import {prepareStudyMorph,setStudyMorph,transitionAmount} from './study-transition';
 import type {LoadedSystem,Manifest,PartRange,StudyLayout,ViewerEvents} from './types';
 
 export class AnatomyScene {
@@ -14,6 +15,7 @@ export class AnatomyScene {
  private showFascia=false;
  private selected:{system:LoadedSystem;part:PartRange}|null=null;private requestToken=0;private raycaster=new Raycaster();private pointer=new Vector2();private start={x:0,y:0};
  private idleTimer:ReturnType<typeof setTimeout>|undefined;private attempted=new Set<string>();private began=performance.now();private first=0;private frames=0;private previous=0;
+ private amount=0;private targetAmount=0;private fromAmount=0;private transitionStart=0;private morphDirty=true;
  private board=false;private boardLayout:StudyLayout|null=null;private boardScroll=0;private boardHeight=0;private boardZoom=1;
  private hoverFrame=0;private pointerEvent:PointerEvent|null=null;private detailKeys:string[]=[];
  constructor(private host:HTMLElement,private manifest:Manifest,private events:ViewerEvents){
@@ -32,17 +34,17 @@ export class AnatomyScene {
  private motion=()=>{this.controls.enableDamping=!this.reduced.matches;this.invalidate();};
  private visibility=()=>{if(!document.hidden){this.invalidate();this.scheduleIdle();}};
  private contextLost=(e:Event)=>{e.preventDefault();this.events.error('Graphics context lost. Reload the viewer to continue.');};
- private resize=()=>{if(this.disposed)return;const w=Math.max(1,this.host.clientWidth),h=Math.max(1,this.host.clientHeight);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.invalidate();};
+ private resize=()=>{if(this.disposed)return;const w=Math.max(1,this.host.clientWidth),h=Math.max(1,this.host.clientHeight);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.morphDirty=true;this.invalidate();};
  private fit(bounds:Box3){const size=bounds.getSize(new Vector3()),center=bounds.getCenter(new Vector3());const distance=Math.max(size.y,size.x/this.camera.aspect,.03)/(2*Math.tan(this.camera.fov*Math.PI/360))*1.18+size.z/2;this.controls.target.copy(center);this.camera.position.copy(center).add(new Vector3(0,0,distance));this.controls.update();this.invalidate();}
  private fitVisible(){const box=new Box3();for(const s of this.loader.loaded.values())if(!s.definition.id.startsWith('detail:'))for(const p of s.parts)if(p.systems.some(id=>this.enabled.has(id)))box.union(p.bounds);if(box.isEmpty())this.fitBody();else this.fit(box);}
  private fitBody(){this.fit(new Box3(new Vector3().fromArray(this.manifest.bounds.min),new Vector3().fromArray(this.manifest.bounds.max)));}
- private async ensure(id:string,priority:number){const definition=this.manifest.systems.find(s=>s.id===id);if(!definition)throw Error('Unknown system');const system=await this.loader.request(definition,priority);if(!this.disposed){if(!system.mesh.parent)this.scene.add(system.mesh);this.sync();this.invalidate();if(id==='skeletal')this.scheduleIdle();}return system;}
+ private async ensure(id:string,priority:number){const definition=this.manifest.systems.find(s=>s.id===id);if(!definition)throw Error('Unknown system');const system=await this.loader.request(definition,priority);if(!this.disposed){if(!system.mesh.parent)this.scene.add(system.mesh);this.morphDirty=true;this.sync();this.invalidate();if(id==='skeletal')this.scheduleIdle();}return system;}
  prefetch(id:string){void this.ensure(id,10).catch(()=>{});}
- setFascia(value:boolean){this.showFascia=value;this.sync();this.invalidate();}
+ setFascia(value:boolean){this.showFascia=value;this.morphDirty=true;this.sync();this.invalidate();}
  setVisible(id:string,enabled:boolean){const next=new Set(this.enabled);if(enabled)next.add(id);else next.delete(id);this.setSystems([...next]);}
- setSystems(ids:string[]){this.requestToken++;this.selected=null;this.events.selection(null);this.enabled=new Set(ids);this.controls.enabled=!this.board;this.sync();this.invalidate();const owners=new Set(this.manifest.structures.filter(p=>p.systems.some(id=>this.enabled.has(id))).map(p=>p.primarySystem));const token=this.requestToken;void Promise.all([...owners].map(id=>this.ensure(id,100).catch(()=>null))).then(()=>{if(!this.disposed&&token===this.requestToken&&!this.board)this.fitVisible();});}
- setStudy(enabled:boolean){this.board=enabled;this.controls.enabled=!enabled||!!this.selected;this.host.dataset.study=String(enabled);this.host.dataset.explode=enabled?'1':'0';this.events.hover(null,0,0);if(!enabled && !this.selected)this.fitBody();this.sync();this.invalidate();}
- setBoard(layout:StudyLayout,scroll:number,height:number,zoom=1){this.boardLayout=layout;this.boardScroll=scroll;this.boardHeight=height;this.boardZoom=zoom;this.invalidate();}
+ setSystems(ids:string[]){this.requestToken++;this.selected=null;this.events.selection(null);this.enabled=new Set(ids);this.morphDirty=true;this.controls.enabled=!this.board;this.sync();this.invalidate();const owners=new Set(this.manifest.structures.filter(p=>p.systems.some(id=>this.enabled.has(id))).map(p=>p.primarySystem));const token=this.requestToken;void Promise.all([...owners].map(id=>this.ensure(id,100).catch(()=>null))).then(()=>{if(!this.disposed&&token===this.requestToken&&!this.board)this.fitVisible();});}
+ setStudy(value:number){if(this.selected)this.clearSelection();this.fromAmount=this.amount;this.targetAmount=Math.max(0,Math.min(1,value));this.transitionStart=performance.now();this.board=this.targetAmount>0||this.amount>0;this.controls.enabled=!this.board;this.host.dataset.study=String(this.board);this.events.hover(null,0,0);if(this.amount===0)this.morphDirty=true;this.sync();this.invalidate();}
+ setBoard(layout:StudyLayout,scroll:number,height:number,zoom=1){this.boardLayout=layout;this.boardScroll=scroll;this.boardHeight=height;this.boardZoom=zoom;this.morphDirty=true;this.invalidate();}
  async isolate(systemId:string,partId:string){
   const token=++this.requestToken;const definition=this.manifest.structures.find(p=>p.id===partId);if(!definition)return;
   try{
@@ -77,13 +79,25 @@ export class AnatomyScene {
  private invalidate=()=>{if(!this.frame&&!this.disposed&&!document.hidden)this.frame=requestAnimationFrame(this.render);};
  private render=(now:number)=>{
   this.frame=0;if(this.disposed)return;this.renderer.info.reset();
+  this.amount=transitionAmount(this.fromAmount,this.targetAmount,now-this.transitionStart,this.reduced.matches);this.board=this.amount>0||this.targetAmount>0;this.controls.enabled=!this.board||!!this.selected;this.host.dataset.explode=String(this.amount);this.host.dataset.study=String(this.board);
+  for(const system of this.loader.loaded.values())setStudyMorph(system,0);
   let moving=false;
-  if(this.board&&!this.selected&&this.boardLayout)this.renderBoard();else{this.renderer.setScissorTest(false);this.renderer.setViewport(0,0,this.host.clientWidth,this.host.clientHeight);moving=this.controls.update();this.renderer.render(this.scene,this.camera);}
+  if(this.amount>0&&this.amount<1&&!this.selected&&this.boardLayout)this.renderTransition();else if(this.amount===1&&!this.selected&&this.boardLayout)this.renderBoard();else{this.sync();this.renderer.setScissorTest(false);this.renderer.setViewport(0,0,this.host.clientWidth,this.host.clientHeight);moving=this.controls.update();this.renderer.render(this.scene,this.camera);}
   if(!this.first&&this.loader.loaded.has('skeletal'))this.first=performance.now()-this.began;
   this.frames++;const info=this.renderer.info;
   Object.assign(this.host.dataset,{drawCalls:String(info.render.calls),triangles:String(info.render.triangles),renderFrames:String(this.frames),loadedSystems:String([...this.loader.loaded.keys()].filter(k=>!k.startsWith('detail:')).length),firstInteractiveMs:String(Math.round(this.first)),geometries:String(info.memory.geometries),textures:String(info.memory.textures)});
-  this.events.metrics({calls:info.render.calls,triangles:info.render.triangles,firstInteractiveMs:this.first,frameMs:this.previous?now-this.previous:0,frames:this.frames,geometries:info.memory.geometries,textures:info.memory.textures});this.previous=now;if(moving)this.invalidate();
+  this.events.metrics({calls:info.render.calls,triangles:info.render.triangles,firstInteractiveMs:this.first,frameMs:this.previous?now-this.previous:0,frames:this.frames,geometries:info.memory.geometries,textures:info.memory.textures});this.previous=now;if(moving||this.amount!==this.targetAmount)this.invalidate();
  };
+ private renderTransition(){
+  const tiles=new Map<string,import('./types').StudyTile>();for(const tile of this.boardLayout!.tiles)if(!tiles.has(tile.id))tiles.set(tile.id,tile);
+  for(const system of this.loader.loaded.values()){
+   if(system.definition.id.startsWith('detail:')){system.mesh.visible=false;continue;}
+   const parts=system.parts.filter(p=>tiles.has(p.id));system.mesh.visible=parts.length>0;if(!parts.length)continue;
+   if(this.morphDirty)prepareStudyMorph(system,tiles,this.host.clientWidth,this.host.clientHeight,this.boardScroll,(name,id)=>this.enabled.has('integumentary')?id==='integumentary':this.showFascia||id!=='muscular'||!(/\bfascia\b/i.test(name)));
+   const g=system.mesh.geometry;g.clearGroups();for(const p of parts)g.addGroup(p.indexStart,p.indexCount,0);if(parts.length===system.parts.length){g.clearGroups();g.addGroup(0,g.index!.count,0);}g.setDrawRange(0,Infinity);setStudyMorph(system,this.amount);
+  }
+  this.morphDirty=false;this.renderer.setScissorTest(false);this.renderer.setViewport(0,0,this.host.clientWidth,this.host.clientHeight);this.renderer.render(this.scene,this.camera);
+ }
  private renderBoard(){
   const width=this.host.clientWidth,height=this.host.clientHeight;this.renderer.setScissorTest(false);this.renderer.setViewport(0,0,width,height);this.renderer.clear();this.renderer.autoClear=false;this.renderer.setScissorTest(true);
   for(const s of this.loader.loaded.values())s.mesh.visible=false;
