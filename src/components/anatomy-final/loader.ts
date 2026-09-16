@@ -13,10 +13,12 @@ export class SystemLoader {
   private jobs = new Map<string,Job>();
   private queue: Job[]=[];
   private running=false;
+  private paused=false;
   private disposed=false;
   private abort=new AbortController();
   readonly loaded=new Map<string,LoadedSystem>();
   constructor(private onStatus: (id:string,status:SystemStatus)=>void) {}
+  setPaused(value:boolean){this.paused=value;if(!value)void this.pump();}
 
   request(definition:SystemDefinition,priority=0):Promise<LoadedSystem> {
     if(this.disposed) return Promise.reject(new Error('Viewer closed'));
@@ -31,7 +33,7 @@ export class SystemLoader {
     void this.pump(); return promise;
   }
   private async pump() {
-    if(this.running || this.disposed) return;
+    if(this.running || this.disposed || this.paused) return;
     this.queue.sort((a,b)=>b.priority-a.priority);
     const job=this.queue.shift(); if(!job) return;
     this.running=true;
@@ -79,7 +81,7 @@ export class SystemLoader {
         const material=anatomyMaterial(job.definition.parts[0]?.primarySystem||job.definition.id);
         merged.addGroup(0,merged.index!.count,0);
         const mesh=new Mesh(merged,[material]);mesh.name=job.definition.id;mesh.frustumCulled=true;
-        const system={definition:job.definition,mesh,parts,rest:new Float32Array(merged.getAttribute('position').array)};
+        const system={definition:job.definition,mesh,parts};
         if(this.disposed) {merged.dispose();material.dispose();throw Error('Viewer closed');}
         this.loaded.set(job.definition.id,system);
         this.onStatus(job.definition.id,{state:'ready',progress:1});job.resolve(system);

@@ -2,6 +2,6 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": { "incremental": false },
-  "include": ["../../src/components/anatomy-final/**/*.ts", "../../src/components/anatomy-final/**/*.tsx", "../../src/app/anatomy-final/page.tsx"],
+  "include": ["../../src/components/anatomy-final/**/*.ts", "../../src/components/anatomy-final/**/*.tsx", "../../src/app/anatomy-final/page.tsx", "../../src/app/credits/page.tsx"],
   "exclude": ["../../node_modules"]
 }

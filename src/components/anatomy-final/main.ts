@@ -16,9 +16,11 @@ export class AnatomyScene {
  private selected:{system:LoadedSystem;part:PartRange}|null=null;private requestToken=0;private raycaster=new Raycaster();private pointer=new Vector2();private start={x:0,y:0};
  private idleTimer:ReturnType<typeof setTimeout>|undefined;private attempted=new Set<string>();private began=performance.now();private first=0;private frames=0;private previous=0;
  private amount=0;private targetAmount=0;private fromAmount=0;private transitionStart=0;private morphDirty=true;
- private board=false;private boardLayout:StudyLayout|null=null;private boardScroll=0;private boardHeight=0;private boardZoom=1;
+ private board=false;private boardLayout:StudyLayout|null=null;private boardScroll=0;private boardHeight=0;
  private hoverFrame=0;private pointerEvent:PointerEvent|null=null;private detailKeys:string[]=[];
- constructor(private host:HTMLElement,private manifest:Manifest,private events:ViewerEvents){
+ private suspended=false;
+ constructor(private host:HTMLElement,private manifest:Manifest,private events:ViewerEvents,initiallySuspended=false){
+  this.suspended=initiallySuspended;
   this.renderer=new WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.setClearColor(new Color('#0B1016'));this.renderer.toneMapping=ACESFilmicToneMapping;this.renderer.toneMappingExposure=1;
   this.renderer.info.autoReset=false;
   const canvas=this.renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('aria-label','Interactive anatomy. Drag to rotate, scroll to zoom. Search or use the structure list for keyboard selection.');this.host.append(canvas);
@@ -26,13 +28,15 @@ export class AnatomyScene {
   this.scene.add(new AmbientLight(0xffffff,.3));const light=new DirectionalLight(0xffffff,1.4);light.position.set(2,3,4);this.scene.add(light);const fill=new DirectionalLight(0xadcfff,.5);fill.position.set(-2,1,-3);this.scene.add(fill);
   const pmrem=new PMREMGenerator(this.renderer),room=new RoomEnvironment();this.environment=pmrem.fromScene(room);this.scene.environment=this.environment.texture;this.scene.environmentIntensity=.55;room.dispose();pmrem.dispose();
   this.loader=new SystemLoader((id,status)=>{if(this.disposed)return;this.events.status(id,status);});
+  this.loader.setPaused(initiallySuspended);
   this.observer=new ResizeObserver(this.resize);this.observer.observe(host);
   canvas.addEventListener('pointerdown',this.down);canvas.addEventListener('pointermove',this.move);canvas.addEventListener('pointerleave',this.leave);canvas.addEventListener('click',this.click);canvas.addEventListener('keydown',this.key);canvas.addEventListener('webglcontextlost',this.contextLost);
   this.reduced.addEventListener('change',this.motion);document.addEventListener('visibilitychange',this.visibility);
   this.resize();this.fitBody();void this.ensure('skeletal',100).catch(()=>{});
  }
+ setSuspended(value:boolean){if(this.suspended===value)return;this.suspended=value;this.loader.setPaused(value);this.controls.enabled=!value&&(!this.board||!!this.selected);if(value){cancelAnimationFrame(this.frame);this.frame=0;cancelAnimationFrame(this.hoverFrame);this.hoverFrame=0;clearTimeout(this.idleTimer);this.events.hover(null,0,0);}else{this.invalidate();this.scheduleIdle();}}
  private motion=()=>{this.controls.enableDamping=!this.reduced.matches;this.invalidate();};
- private visibility=()=>{if(!document.hidden){this.invalidate();this.scheduleIdle();}};
+ private visibility=()=>{if(!document.hidden&&!this.suspended){this.invalidate();this.scheduleIdle();}};
  private contextLost=(e:Event)=>{e.preventDefault();this.events.error('Graphics context lost. Reload the viewer to continue.');};
  private resize=()=>{if(this.disposed)return;const w=Math.max(1,this.host.clientWidth),h=Math.max(1,this.host.clientHeight);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.morphDirty=true;this.invalidate();};
  private fit(bounds:Box3){const size=bounds.getSize(new Vector3()),center=bounds.getCenter(new Vector3());const distance=Math.max(size.y,size.x/this.camera.aspect,.03)/(2*Math.tan(this.camera.fov*Math.PI/360))*1.18+size.z/2;this.controls.target.copy(center);this.camera.position.copy(center).add(new Vector3(0,0,distance));this.controls.update();this.invalidate();}
@@ -41,10 +45,9 @@ export class AnatomyScene {
  private async ensure(id:string,priority:number){const definition=this.manifest.systems.find(s=>s.id===id);if(!definition)throw Error('Unknown system');const system=await this.loader.request(definition,priority);if(!this.disposed){if(!system.mesh.parent)this.scene.add(system.mesh);this.morphDirty=true;this.sync();this.invalidate();if(id==='skeletal')this.scheduleIdle();}return system;}
  prefetch(id:string){void this.ensure(id,10).catch(()=>{});}
  setFascia(value:boolean){this.showFascia=value;this.morphDirty=true;this.sync();this.invalidate();}
- setVisible(id:string,enabled:boolean){const next=new Set(this.enabled);if(enabled)next.add(id);else next.delete(id);this.setSystems([...next]);}
  setSystems(ids:string[]){this.requestToken++;this.selected=null;this.events.selection(null);this.enabled=new Set(ids);this.morphDirty=true;this.controls.enabled=!this.board;this.sync();this.invalidate();const owners=new Set(this.manifest.structures.filter(p=>p.systems.some(id=>this.enabled.has(id))).map(p=>p.primarySystem));const token=this.requestToken;void Promise.all([...owners].map(id=>this.ensure(id,100).catch(()=>null))).then(()=>{if(!this.disposed&&token===this.requestToken&&!this.board)this.fitVisible();});}
  setStudy(value:number){if(this.selected)this.clearSelection();this.fromAmount=this.amount;this.targetAmount=Math.max(0,Math.min(1,value));this.transitionStart=performance.now();this.board=this.targetAmount>0||this.amount>0;this.controls.enabled=!this.board;this.host.dataset.study=String(this.board);this.events.hover(null,0,0);if(this.amount===0)this.morphDirty=true;this.sync();this.invalidate();}
- setBoard(layout:StudyLayout,scroll:number,height:number,zoom=1){this.boardLayout=layout;this.boardScroll=scroll;this.boardHeight=height;this.boardZoom=zoom;this.morphDirty=true;this.invalidate();}
+ setBoard(layout:StudyLayout,scroll:number,height:number){this.boardLayout=layout;this.boardScroll=scroll;this.boardHeight=height;this.morphDirty=true;this.invalidate();}
  async isolate(systemId:string,partId:string){
   const token=++this.requestToken;const definition=this.manifest.structures.find(p=>p.id===partId);if(!definition)return;
   try{
@@ -75,10 +78,10 @@ export class AnatomyScene {
    if(active.length!==system.parts.length){g.clearGroups();let last:{start:number;count:number}|undefined;for(const p of active){if(last&&last.start+last.count===p.indexStart)last.count+=p.indexCount;else{last={start:p.indexStart,count:p.indexCount};g.groups.push({...last,materialIndex:0});}if(last)g.groups[g.groups.length-1].count=last.count;}}
   }
  }
- private scheduleIdle(){clearTimeout(this.idleTimer);this.idleTimer=setTimeout(()=>{if(this.disposed||document.hidden||(navigator as Navigator&{connection?:{saveData?:boolean}}).connection?.saveData)return;const next=this.manifest.systems.find(s=>!this.loader.loaded.has(s.id)&&!this.attempted.has(s.id));if(next){this.attempted.add(next.id);void this.ensure(next.id,-10).catch(()=>{}).finally(()=>{if(!this.disposed)this.scheduleIdle();});}},1800);}
- private invalidate=()=>{if(!this.frame&&!this.disposed&&!document.hidden)this.frame=requestAnimationFrame(this.render);};
+ private scheduleIdle(){clearTimeout(this.idleTimer);if(this.suspended)return;this.idleTimer=setTimeout(()=>{if(this.disposed||this.suspended||document.hidden||(navigator as Navigator&{connection?:{saveData?:boolean}}).connection?.saveData)return;const next=this.manifest.systems.find(s=>!this.loader.loaded.has(s.id)&&!this.attempted.has(s.id));if(next){this.attempted.add(next.id);void this.ensure(next.id,-10).catch(()=>{}).finally(()=>{if(!this.disposed)this.scheduleIdle();});}},1800);}
+ private invalidate=()=>{if(!this.frame&&!this.disposed&&!this.suspended&&!document.hidden)this.frame=requestAnimationFrame(this.render);};
  private render=(now:number)=>{
-  this.frame=0;if(this.disposed)return;this.renderer.info.reset();
+  this.frame=0;if(this.disposed||this.suspended)return;this.renderer.info.reset();
   this.amount=transitionAmount(this.fromAmount,this.targetAmount,now-this.transitionStart,this.reduced.matches);this.board=this.amount>0||this.targetAmount>0;this.controls.enabled=!this.board||!!this.selected;this.host.dataset.explode=String(this.amount);this.host.dataset.study=String(this.board);
   for(const system of this.loader.loaded.values())setStudyMorph(system,0);
   let moving=false;
@@ -115,9 +118,9 @@ export class AnatomyScene {
  }
  private down=(e:PointerEvent)=>{this.start={x:e.clientX,y:e.clientY};};
  private pick(e:MouseEvent){const rect=this.renderer.domElement.getBoundingClientRect();this.pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);this.raycaster.setFromCamera(this.pointer,this.camera);const systems=[...this.loader.loaded.values()].filter(s=>s.mesh.visible);const hit=this.raycaster.intersectObjects(systems.map(s=>s.mesh),false)[0];if(!hit||hit.faceIndex==null)return null;const system=systems.find(s=>s.mesh===hit.object)!;const part=partAtTriangle(system,hit.faceIndex);return part?{system,part}:null;}
- private move=(e:PointerEvent)=>{if(this.board&&!this.selected)return;this.pointerEvent=e;if(this.hoverFrame||e.buttons)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.disposed||!this.pointerEvent)return;const hit=this.pick(this.pointerEvent),r=this.host.getBoundingClientRect();this.events.hover(hit?.part.name||null,this.pointerEvent.clientX-r.left,this.pointerEvent.clientY-r.top);});};
+ private move=(e:PointerEvent)=>{if(this.suspended||this.board&&!this.selected)return;this.pointerEvent=e;if(this.hoverFrame||e.buttons)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.disposed||!this.pointerEvent)return;const hit=this.pick(this.pointerEvent),r=this.host.getBoundingClientRect();this.events.hover(hit?.part.name||null,this.pointerEvent.clientX-r.left,this.pointerEvent.clientY-r.top);});};
  private leave=()=>{this.pointerEvent=null;this.events.hover(null,0,0);};
- private click=(e:MouseEvent)=>{if(this.board&&!this.selected||Math.hypot(e.clientX-this.start.x,e.clientY-this.start.y)>5)return;const hit=this.pick(e);if(hit)void this.isolate(hit.part.primarySystem,hit.part.id);};
- private key=(e:KeyboardEvent)=>{if(e.key==='Escape'){this.clearSelection();return;}if(this.board&&!this.selected)return;const offset=this.camera.position.clone().sub(this.controls.target);if(e.key==='ArrowLeft'||e.key==='ArrowRight')offset.applyAxisAngle(new Vector3(0,1,0),e.key==='ArrowLeft'?.1:-.1);else if(e.key==='ArrowUp'||e.key==='ArrowDown')offset.applyAxisAngle(new Vector3(1,0,0),e.key==='ArrowUp'?.1:-.1);else if(e.key==='+'||e.key==='=')offset.multiplyScalar(.9);else if(e.key==='-')offset.multiplyScalar(1.1);else if(e.key==='Home'){this.resetView();return;}else return;e.preventDefault();this.camera.position.copy(this.controls.target).add(offset.clampLength(.03,8));this.controls.update();this.invalidate();};
+ private click=(e:MouseEvent)=>{if(this.suspended||this.board&&!this.selected||Math.hypot(e.clientX-this.start.x,e.clientY-this.start.y)>5)return;const hit=this.pick(e);if(hit)void this.isolate(hit.part.primarySystem,hit.part.id);};
+ private key=(e:KeyboardEvent)=>{if(this.suspended)return;if(e.key==='Escape'){this.clearSelection();return;}if(this.board&&!this.selected)return;const offset=this.camera.position.clone().sub(this.controls.target);if(e.key==='ArrowLeft'||e.key==='ArrowRight')offset.applyAxisAngle(new Vector3(0,1,0),e.key==='ArrowLeft'?.1:-.1);else if(e.key==='ArrowUp'||e.key==='ArrowDown')offset.applyAxisAngle(new Vector3(1,0,0),e.key==='ArrowUp'?.1:-.1);else if(e.key==='+'||e.key==='=')offset.multiplyScalar(.9);else if(e.key==='-')offset.multiplyScalar(1.1);else if(e.key==='Home'){this.resetView();return;}else return;e.preventDefault();this.camera.position.copy(this.controls.target).add(offset.clampLength(.03,8));this.controls.update();this.invalidate();};
  dispose(){this.disposed=true;this.requestToken++;cancelAnimationFrame(this.frame);cancelAnimationFrame(this.hoverFrame);clearTimeout(this.idleTimer);this.observer.disconnect();document.removeEventListener('visibilitychange',this.visibility);this.reduced.removeEventListener('change',this.motion);this.controls.dispose();this.loader.dispose();this.environment.dispose();const c=this.renderer.domElement;c.removeEventListener('pointerdown',this.down);c.removeEventListener('pointermove',this.move);c.removeEventListener('pointerleave',this.leave);c.removeEventListener('click',this.click);c.removeEventListener('keydown',this.key);c.removeEventListener('webglcontextlost',this.contextLost);this.renderer.dispose();c.remove();}
 }

@@ -3,12 +3,12 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {packStudy,visibleTiles} from './study-layout';
 import type {Manifest,StudyLayout} from './types';
-export function StudyBoard({manifest,enabled,hidden,progress,onLayout,onSelect,onPrefetch}:{manifest:Manifest;enabled:string[];hidden:boolean;progress:number;onLayout:(layout:StudyLayout,scroll:number,height:number,zoom:number)=>void;onSelect:(system:string,id:string)=>void;onPrefetch:(system:string)=>void}){
+export function StudyBoard({manifest,enabled,hidden,progress,onLayout,onSelect,onPrefetch}:{manifest:Manifest;enabled:string[];hidden:boolean;progress:number;onLayout:(layout:StudyLayout,scroll:number,height:number)=>void;onSelect:(system:string,id:string)=>void;onPrefetch:(system:string)=>void}){
  const ref=useRef<HTMLDivElement>(null);const [size,setSize]=useState({width:395,height:600}),[top,setTop]=useState(0),[zoom,setZoom]=useState(1);
  const drag=useRef<{y:number;top:number;moved:boolean}|null>(null),suppress=useRef(false);
  useEffect(()=>{const el=ref.current;if(!el)return;const observer=new ResizeObserver(()=>setSize({width:el.clientWidth,height:el.clientHeight}));observer.observe(el);return()=>observer.disconnect();},[]);
  const layout=useMemo(()=>packStudy(manifest,enabled,size.width,zoom),[manifest,enabled,size.width,zoom]);
- useEffect(()=>onLayout(layout,top,size.height,zoom),[layout,top,size.height,zoom,onLayout]);
+ useEffect(()=>onLayout(layout,top,size.height),[layout,top,size.height,onLayout]);
  useEffect(()=>{const el=ref.current;if(!el)return;const wheel=(e:WheelEvent)=>{if(e.ctrlKey||e.metaKey){e.preventDefault();setZoom(z=>Math.max(.75,Math.min(2,z+(e.deltaY<0?.1:-.1))));}};el.addEventListener('wheel',wheel,{passive:false});return()=>el.removeEventListener('wheel',wheel);},[]);
  const visible=visibleTiles(layout,top,size.height);
  useEffect(()=>{if(hidden)return;for(const system of new Set(visible.map(t=>manifest.structures.find(p=>p.id===t.id)!.primarySystem)))onPrefetch(system);},[layout,top,size.height,manifest,onPrefetch,hidden]); // eslint-disable-line react-hooks/exhaustive-deps

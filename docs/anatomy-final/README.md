@@ -53,6 +53,8 @@ See [ASSET-AUDIT.md](ASSET-AUDIT.md) for independently inspected quantization, f
 - Local first interactive skeleton about 0.9–1.1 seconds (excludes navigation/bootstrap). Conservative model/index/decoder transfer at 10 Mbps: 4.34 seconds, plus initialization and production JS/CSS/fonts. Production end-to-end startup is unmeasured. See startup-estimate.json.
 - Anatomical source review, continuous skin quality, detailed nerve coverage and registration sign-off remain unresolved. The original strict one-call / 2 MB rules are superseded; actual fidelity and limitations are reported instead.
 
-Production route compilation succeeds. Full-project TypeScript remains blocked by the pre-existing empty `src/app/question-bank/types.ts` module and its dependent implicit-any error. The dedicated anatomy TypeScript check passes; question-bank files were not changed.
+The full Webpack production build now passes after restoring the quiz-directory type and correcting the quiz-session searchParams promise type. Turbopack helper-port creation is blocked in this local execution environment; no bundler configuration was changed.
 
 Continuous study transition: the slider accepts 0–100 in 1% increments. A 180ms reversible GPU vertex morph interpolates from the current assembled-camera projection to each normalized orthographic tile. Original geometry positions stay immutable; bounds culling is suspended only during the screen-space transition. Intermediate views stop rendering when settled. At 100%, the virtualized board and inspection controls take over; reduced motion skips timed interpolation.
+
+Attribution presentation: detailed source notices now live at `/credits`, accessible through the compact permanent Credits & licenses link in the atlas. Asset downloads and original plain-text notices remain available.

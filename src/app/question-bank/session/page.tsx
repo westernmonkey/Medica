@@ -28,12 +28,9 @@ export interface QuestionData {
 export default async function QuizPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  // 🚀 CRITICAL FIX: The error suggests that searchParams is a Proxy-like object
-  // that needs to be explicitly resolved before accessing its properties,
-  // even if the component is async. We use Promise.resolve to explicitly await it.
-  const resolvedSearchParams = (await Promise.resolve(searchParams)) as typeof searchParams;
+  const resolvedSearchParams = await searchParams;
 
   const exam = decodeURIComponent(resolvedSearchParams.exam as string);
   const subject = decodeURIComponent(resolvedSearchParams.subject as string);

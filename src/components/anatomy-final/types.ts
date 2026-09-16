@@ -5,7 +5,7 @@ export interface SystemDefinition {id:string;label:string;color:string;url:strin
 export interface DetailDefinition {id:string;url:string;bytes:number;systemId:string;parts:Part[]}
 export interface Manifest {version:2;copyright:string;bounds:{min:number[];max:number[]};systems:SystemDefinition[];structures:Part[];details:DetailDefinition[];sources:Array<{id:string;license:string;url:string;attribution:string}>;coverage:{url:string;reviewStatus:string;missing:string[]}}
 export interface PartRange extends Part {indexStart:number;indexCount:number;vertexStart:number;vertexCount:number;center:Vector3;bounds:Box3}
-export interface LoadedSystem {definition:SystemDefinition;mesh:Mesh<BufferGeometry,MeshStandardMaterial[]>;parts:PartRange[];rest:Float32Array}
+export interface LoadedSystem {definition:SystemDefinition;mesh:Mesh<BufferGeometry,MeshStandardMaterial[]>;parts:PartRange[]}
 export type LoadState='idle'|'queued'|'loading'|'ready'|'error';
 export interface SystemStatus {state:LoadState;progress:number;error?:string}
 export interface Selection extends Part {systemId:string;systemLabel:string}
