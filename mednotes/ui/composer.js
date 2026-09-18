@@ -22,8 +22,8 @@ function createComposer(options) {
   const textArea = document.createElement("textarea");
   textArea.id = "composer-text";
   textArea.rows = 3;
-  textArea.placeholder = "Type a note…";
-  textArea.setAttribute("aria-label", "Note text");
+  textArea.placeholder = "Type a post…";
+  textArea.setAttribute("aria-label", "Post text");
 
   const toolbar = document.createElement("div");
   toolbar.className = "composer-toolbar";
@@ -35,7 +35,7 @@ function createComposer(options) {
   micBtn.id = "mic-btn";
   micBtn.className = "icon-button";
   micBtn.innerHTML = micIcon;
-  micBtn.setAttribute("aria-label", "Record voice note");
+  micBtn.setAttribute("aria-label", "Record voice post");
 
   const recordDot = document.createElement("span");
   recordDot.id = "record-dot";
@@ -145,7 +145,7 @@ function createComposer(options) {
       isRecording = false;
       recordDot.classList.add("hidden");
       micBtn.innerHTML = micIcon;
-      micBtn.setAttribute("aria-label", "Record voice note");
+      micBtn.setAttribute("aria-label", "Record voice post");
       stream.getTracks().forEach(function stopTrack(track) {
         track.stop();
       });
@@ -181,7 +181,7 @@ function createComposer(options) {
     try {
       await onSave(payload);
       clearComposer();
-      attachStatus.textContent = "Saved to your notes";
+      attachStatus.textContent = "Saved to your posts";
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = "Save";

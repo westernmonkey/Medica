@@ -11,13 +11,13 @@
   <aside class="side-rail">
     <div class="logo-plaque"><img class="medica-logo" src="assets/medica-logo.png" alt="Medica" /></div>
     <span class="rail-caption">MEDNOTES</span>
-    <a href="#notes-section" class="rail-link"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg> Notes</a>
-    <a href="#note-section" class="rail-link"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg> New note</a>
+    <a href="#notes-section" class="rail-link is-active"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg> Posts</a>
+    <button id="open-trash" type="button" class="rail-link" aria-label="Open Trash"><img src="assets/trash.svg" alt="" aria-hidden="true" /> Trash <span id="trash-count" aria-label="Posts in Trash">0</span></button>
     <div class="rail-footer"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg><span>Stored on your device</span></div>
   </aside>
   <main class="shell">
     <header class="top">
-      <div class="brand"><span class="brand-divider" aria-hidden="true"></span><span>Your notes</span></div>
+      <div class="brand"><span class="brand-divider" aria-hidden="true"></span><span>Your posts</span></div>
       <button id="open-search" type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg> Search <kbd id="search-shortcut">⌘ K</kbd></button>
     </header>
     <section class="identity-panel" aria-label="MedNotes">
@@ -31,28 +31,34 @@
       </svg>
       <span class="identity-foot">TEXT / PHOTOS / VOICE</span>
     </section>
-    <section class="composer-wrap panel" id="note-section" aria-label="New note">
-      <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14zM4 14l5 5"/></svg></span><h2>New note</h2></div>
+    <section class="composer-wrap panel" id="note-section" aria-label="New post">
+      <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14zM4 14l5 5"/></svg></span><h2>New post</h2></div>
         <svg class="panel-art" aria-hidden="true" viewBox="0 0 112 48"><circle class="art-butter" cx="82" cy="22" r="18"/><path class="art-line" d="M5 32c12-30 23 19 39-8S64 3 72 21s19 15 32-10"/><path class="art-spark" d="M42 4v12m-6-6h12M100 32v10m-5-5h10"/></svg>
       </div>
       <div id="composer"></div>
     </section>
-    <section class="list-wrap panel" id="notes-section" aria-label="Your notes">
-      <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M3 7h4M3 12h4M3 17h4M11 8h5M11 12h5M11 16h3"/></svg></span><h2>Notes</h2><span id="note-count" class="count-chip" aria-live="polite"></span></div><svg class="stack-art" aria-hidden="true" viewBox="0 0 48 48"><rect class="art-mint" x="8" y="8" width="27" height="32" rx="5" transform="rotate(-12 22 24)"/><rect class="art-paper" x="15" y="5" width="27" height="32" rx="5" transform="rotate(8 28 22)"/><path class="art-line" d="m22 15 13 2m-14 5 13 2m-14 5 8 1"/></svg></div>
+    <section class="list-wrap panel" id="notes-section" aria-label="Your posts">
+      <div class="panel-heading"><div class="heading-label"><span class="heading-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M3 7h4M3 12h4M3 17h4M11 8h5M11 12h5M11 16h3"/></svg></span><h2>Posts</h2><span id="note-count" class="count-chip" aria-live="polite"></span></div><svg class="stack-art" aria-hidden="true" viewBox="0 0 48 48"><rect class="art-mint" x="8" y="8" width="27" height="32" rx="5" transform="rotate(-12 22 24)"/><rect class="art-paper" x="15" y="5" width="27" height="32" rx="5" transform="rotate(8 28 22)"/><path class="art-line" d="m22 15 13 2m-14 5 13 2m-14 5 8 1"/></svg></div>
       <div id="post-list"></div>
     </section>
   </main>
   <dialog id="search-dialog" aria-labelledby="search-title">
-    <div class="dialog-heading"><h2 id="search-title">Search notes</h2><button id="close-search" type="button" aria-label="Close search">Esc</button></div>
-    <form id="search-form"><input id="search-input" aria-label="Search notes by meaning" type="search" placeholder="Search by meaning…" autocomplete="off" /><button type="submit">Search</button></form>
+    <div class="dialog-heading"><h2 id="search-title">Search posts</h2><button id="close-search" type="button" aria-label="Close search">Esc</button></div>
+    <form id="search-form"><input id="search-input" aria-label="Search posts by meaning" type="search" placeholder="Search by meaning…" autocomplete="off" /><button type="submit">Search</button></form>
     <div id="date-filter" class="date-filter"></div>
     <p id="search-status" role="status">Enter a search, then press Enter.</p>
     <div id="search-results" aria-label="Search results"></div>
   </dialog>
+  <dialog id="trash-dialog" aria-labelledby="trash-title">
+    <div class="dialog-heading"><div><h2 id="trash-title">Trash</h2><p>Restore a post or delete it forever.</p></div><button id="close-trash" type="button" aria-label="Close Trash">Esc</button></div>
+    <p id="trash-status" role="status"></p>
+    <div id="trash-list" aria-label="Deleted posts"></div>
+    <div class="trash-footer"><button id="empty-trash" type="button">Empty Trash</button></div>
+  </dialog>
   <dialog id="edit-dialog" aria-labelledby="edit-title">
     <form id="edit-form">
-      <div class="dialog-heading"><div><h2 id="edit-title">Edit note</h2></div><button type="button" id="edit-close" aria-label="Close editor">✕</button></div>
-      <label class="editor-label" for="edit-text">Note text</label><textarea id="edit-text" required></textarea>
+      <div class="dialog-heading"><div><h2 id="edit-title">Edit post</h2></div><button type="button" id="edit-close" aria-label="Close editor">✕</button></div>
+      <label class="editor-label" for="edit-text">Post text</label><textarea id="edit-text" required></textarea>
       <label class="editor-label hidden" id="tag-label" for="edit-tag">Tag name</label><input class="hidden" id="edit-tag" maxlength="100" autocomplete="off" />
       <p id="edit-status" role="status"></p>
       <div class="editor-actions"><button type="button" id="edit-cancel">Cancel</button><button type="submit" id="edit-save">Save changes</button></div>

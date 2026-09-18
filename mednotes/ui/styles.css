@@ -23,7 +23,7 @@ button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; min-height: var(--control); border: var(--border) solid var(--line); border-radius: var(--r2); padding: var(--s2) var(--s3); background: var(--panel); transition: transform var(--duration) var(--ease); }
 button:hover { border-color: var(--line-hover); }
 button:active:not(:disabled) { transform: translateY(var(--border)); }
-button:disabled { opacity: .4; cursor: wait; }
+button:disabled { opacity: .4; cursor: not-allowed; }
 :focus-visible { outline: var(--outline) solid var(--accent); outline-offset: var(--outline); }
 input, textarea { background: var(--panel); border: var(--border) solid var(--line); border-radius: var(--r2); padding: var(--s2) var(--s3); min-width: 0; }
 ::placeholder { color: var(--muted); }
@@ -121,8 +121,12 @@ dialog::backdrop { background: var(--backdrop); }
 .logo-plaque .medica-logo { width: 100%; }
 .rail-caption { color: var(--lime); font-size: var(--caption); font-weight: var(--medium); margin: 0 var(--s2) var(--s2); }
 .rail-link { display: flex; align-items: center; gap: var(--s2); color: var(--panel); text-decoration: none; padding: var(--s3); border-radius: var(--r2); border: var(--border) solid transparent; }
-.rail-link:first-of-type { background: var(--lime); color: var(--deep); font-weight: var(--bold); }
+.rail-link img { width: var(--icon); height: var(--icon); filter: brightness(0) invert(1); }
+.rail-link #trash-count { margin-left: auto; min-width: var(--s6); border-radius: var(--pill); background: var(--panel); color: var(--deep); text-align: center; font-size: var(--caption); }
+.rail-link.is-active { background: var(--lime); color: var(--deep); font-weight: var(--bold); }
 .rail-link:hover { border-color: var(--lime); }
+#open-trash { text-align: left; }
+#open-trash:not(.is-active) { background: transparent; }
 .rail-footer { margin-top: auto; display: flex; gap: var(--s2); align-items: center; font-size: var(--caption); color: var(--mint); padding: var(--s2); }
 .shell { margin-left: var(--rail); padding: var(--s6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--s6); }
 .top, .list-wrap { grid-column: 1 / -1; }
@@ -162,6 +166,15 @@ dialog::backdrop { background: var(--backdrop); }
 .post:nth-child(3n) { background: var(--butter); border-top-color: var(--deep); }
 .post:hover { border-color: var(--line-hover); }
 .post-meta { color: var(--accent); }
+.dialog-heading p, #trash-status, .trash-details { color: var(--muted); font-size: var(--caption); }
+#trash-list { display: grid; gap: var(--s3); max-height: 50vh; overflow: auto; }
+.trash-post { border: var(--border) solid var(--line); border-radius: var(--r3); padding: var(--s4); background: var(--raised); }
+.trash-post .post-text { max-height: 7.5em; overflow: hidden; }
+.trash-details { margin-top: var(--s2); }
+.trash-actions, .trash-footer { display: flex; justify-content: flex-end; gap: var(--s2); margin-top: var(--s3); }
+.trash-actions button:first-child { color: var(--accent); }
+.trash-actions button:last-child, #empty-trash { color: var(--recording); }
+.trash-empty { padding: var(--s6); text-align: center; color: var(--muted); }
 .empty { border-radius: var(--r4); border: var(--border) solid var(--line); background: var(--panel); }
 @media (min-width: 1100px) { #post-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); align-items: start; } .post { margin-bottom: 0; } }
 @media (max-width: 760px) {

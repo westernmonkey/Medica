@@ -1,6 +1,6 @@
 /**
- * Reasoning: Storage must prove dual write, exact text round trip, untouched
- * media bytes, edit of text+vector in both folders, and delete of both folders.
+ * Storage must prove synchronized Active and Recovery copies, reversible Trash,
+ * permanent deletion, exact round trips, and rejection of forged post IDs.
  * MEDNOTES_HOME points everything at a temp tree so tests stay isolated.
  */
 const test = require("node:test");
@@ -14,9 +14,9 @@ process.env.MEDNOTES_HOME = tmpRoot;
 
 const { savePost } = require("../storage/save-post");
 const { editPost } = require("../storage/edit-post");
-const { deletePost } = require("../storage/delete-post");
+const { deletePost, restorePost, deletePostForever, emptyTrash, readTrashPosts } = require("../storage/delete-post");
 const { readPosts } = require("../storage/read-posts");
-const { getPostPaths } = require("../storage/paths");
+const { ensureRootsExist, getPostPaths } = require("../storage/paths");
 
 function makeFakeJpeg() {
   return Buffer.from([
@@ -37,7 +37,7 @@ function makeVector(seed) {
   return vector;
 }
 
-test("save writes text image voice and vector to working and mirror", async function testSaveDualWrite() {
+test("save writes text image voice and vector to active and recovery", async function testSaveDualWrite() {
   const image = makeFakeJpeg();
   const voice = makeFakeWebm();
   const vector = makeVector(1);
@@ -50,26 +50,26 @@ test("save writes text image voice and vector to working and mirror", async func
   });
   const paths = getPostPaths(post.id);
 
-  const workingText = fs.readFileSync(path.join(paths.working, "text.md"), "utf8");
-  const mirrorText = fs.readFileSync(path.join(paths.mirror, "text.md"), "utf8");
+  const workingText = fs.readFileSync(path.join(paths.active, "text.md"), "utf8");
+  const mirrorText = fs.readFileSync(path.join(paths.recovery, "text.md"), "utf8");
   assert.equal(workingText, text);
   assert.equal(mirrorText, text);
 
-  const workingImage = fs.readFileSync(path.join(paths.working, "image.jpg"));
-  const mirrorImage = fs.readFileSync(path.join(paths.mirror, "image.jpg"));
+  const workingImage = fs.readFileSync(path.join(paths.active, "image.jpg"));
+  const mirrorImage = fs.readFileSync(path.join(paths.recovery, "image.jpg"));
   assert.deepEqual(workingImage, image);
   assert.deepEqual(mirrorImage, image);
   assert.equal(workingImage[0], 0xff);
   assert.equal(workingImage[1], 0xd8);
 
-  const workingVoice = fs.readFileSync(path.join(paths.working, "voice.webm"));
-  const mirrorVoice = fs.readFileSync(path.join(paths.mirror, "voice.webm"));
+  const workingVoice = fs.readFileSync(path.join(paths.active, "voice.webm"));
+  const mirrorVoice = fs.readFileSync(path.join(paths.recovery, "voice.webm"));
   assert.deepEqual(workingVoice, voice);
   assert.deepEqual(mirrorVoice, voice);
   assert.equal(workingVoice[0], 0x1a);
   assert.equal(workingVoice[1], 0x45);
 
-  const workingVector = fs.readFileSync(path.join(paths.working, "vector.bin"));
+  const workingVector = fs.readFileSync(path.join(paths.active, "vector.bin"));
   assert.equal(workingVector.byteLength, 1536);
   console.log("save-post: text match=true imageBytes=" + image.length + " voiceBytes=" + voice.length + " vectorBytes=1536");
 });
@@ -87,11 +87,11 @@ test("edit updates text and vector in both folders", async function testEditBoth
   await editPost({ id: post.id, text: newText, vector: newVector });
   const paths = getPostPaths(post.id);
 
-  assert.equal(fs.readFileSync(path.join(paths.working, "text.md"), "utf8"), newText);
-  assert.equal(fs.readFileSync(path.join(paths.mirror, "text.md"), "utf8"), newText);
+  assert.equal(fs.readFileSync(path.join(paths.active, "text.md"), "utf8"), newText);
+  assert.equal(fs.readFileSync(path.join(paths.recovery, "text.md"), "utf8"), newText);
 
-  const workingBytes = fs.readFileSync(path.join(paths.working, "vector.bin"));
-  const mirrorBytes = fs.readFileSync(path.join(paths.mirror, "vector.bin"));
+  const workingBytes = fs.readFileSync(path.join(paths.active, "vector.bin"));
+  const mirrorBytes = fs.readFileSync(path.join(paths.recovery, "vector.bin"));
   const workingVec = new Float32Array(
     workingBytes.buffer,
     workingBytes.byteOffset,
@@ -108,7 +108,7 @@ test("edit updates text and vector in both folders", async function testEditBoth
   console.log("edit-post: both folders updated text+vector");
 });
 
-test("delete removes both folders", async function testDeleteBoth() {
+test("delete moves active post to Trash and restore returns it", async function testTrashRestore() {
   const post = await savePost({
     text: "Temporary note to delete.",
     imageBuffer: null,
@@ -117,9 +117,53 @@ test("delete removes both folders", async function testDeleteBoth() {
   });
   const paths = getPostPaths(post.id);
   await deletePost(post.id);
-  assert.equal(fs.existsSync(paths.working), false);
-  assert.equal(fs.existsSync(paths.mirror), false);
-  console.log("delete-post: both folders removed");
+  assert.equal(fs.existsSync(paths.active), false);
+  assert.equal(fs.existsSync(paths.trash), true);
+  assert.equal(fs.existsSync(paths.recovery), true);
+  assert.equal((await readTrashPosts())[0].id, post.id);
+  await restorePost(post.id);
+  assert.equal(fs.existsSync(paths.active), true);
+  assert.equal(fs.existsSync(paths.trash), false);
+  assert.equal(fs.existsSync(paths.recovery), true);
+  console.log("delete-post: Trash move and restore passed");
+});
+
+test("delete forever removes Trash and Recovery copies", async function testDeleteForever() {
+  const post = await savePost({ text: "Permanent deletion test.", imageBuffer: null, voiceBuffer: null, vector: makeVector(7) });
+  const paths = getPostPaths(post.id);
+  await deletePost(post.id);
+  await deletePostForever(post.id);
+  assert.equal(fs.existsSync(paths.trash), false);
+  assert.equal(fs.existsSync(paths.recovery), false);
+});
+
+test("forged post IDs cannot escape the data root", async function testRejectsTraversal() {
+  await assert.rejects(() => deletePost("../../outside"), /Invalid post ID/);
+});
+
+test("legacy post folders migrate into active and recovery", function testLegacyMigration() {
+  const id = "2025-01-02T03-04-05-006Z_abcd";
+  const legacy = path.join(tmpRoot, id);
+  fs.mkdirSync(legacy);
+  fs.writeFileSync(path.join(legacy, "text.md"), "Legacy post", "utf8");
+  fs.writeFileSync(path.join(legacy, "vector.bin"), Buffer.alloc(1536));
+  fs.writeFileSync(path.join(legacy, "tags.json"), "[]", "utf8");
+  const roots = ensureRootsExist();
+  assert.equal(fs.existsSync(legacy), false);
+  assert.equal(fs.existsSync(path.join(roots.active, id, "text.md")), true);
+  assert.equal(fs.existsSync(path.join(roots.recovery, id, "text.md")), true);
+});
+
+test("empty Trash permanently removes every trashed post and recovery", async function testEmptyTrash() {
+  const first = await savePost({ text: "First Trash post", imageBuffer: null, voiceBuffer: null, vector: makeVector(8) });
+  const second = await savePost({ text: "Second Trash post", imageBuffer: null, voiceBuffer: null, vector: makeVector(9) });
+  await deletePost(first.id);
+  await deletePost(second.id);
+  const result = await emptyTrash();
+  assert.equal(result.deleted, 2);
+  assert.equal((await readTrashPosts()).length, 0);
+  assert.equal(fs.existsSync(getPostPaths(first.id).recovery), false);
+  assert.equal(fs.existsSync(getPostPaths(second.id).recovery), false);
 });
 
 test("readPosts returns saved posts with vectors", async function testReadPosts() {

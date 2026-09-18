@@ -17,6 +17,18 @@ contextBridge.exposeInMainWorld("mednotes", {
   deletePost: function deletePost(id) {
     return ipcRenderer.invoke("delete-post", id);
   },
+  readTrashPosts: function readTrashPosts() {
+    return ipcRenderer.invoke("read-trash-posts");
+  },
+  restorePost: function restorePost(id) {
+    return ipcRenderer.invoke("restore-post", id);
+  },
+  deletePostForever: function deletePostForever(id) {
+    return ipcRenderer.invoke("delete-post-forever", id);
+  },
+  emptyTrash: function emptyTrash() {
+    return ipcRenderer.invoke("empty-trash");
+  },
   searchPosts: function searchPosts(payload) {
     return ipcRenderer.invoke("search-posts", payload);
   },

@@ -88,7 +88,7 @@ function createPostList(options) {
     deleteBtn.type = "button";
     deleteBtn.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg><span>Delete</span>';
     deleteBtn.addEventListener("click", function onDeleteClick() {
-      if (window.confirm("Delete this note?")) {
+      if (window.confirm("Move this post to Trash?")) {
         onDelete(post.id);
       }
     });
@@ -105,7 +105,7 @@ function createPostList(options) {
     if (!posts || posts.length === 0) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.innerHTML = '<svg class="empty-art" aria-hidden="true" viewBox="0 0 80 80"><circle class="art-mint" cx="40" cy="40" r="34"/><rect class="art-paper" x="24" y="16" width="35" height="46" rx="6" transform="rotate(8 40 40)"/><path class="art-line" d="m33 29 16 2m-17 7 16 2m-17 7 10 1"/><circle class="art-butter" cx="61" cy="58" r="10"/></svg><span>No notes yet</span><p>Your saved notes will appear here.</p>';
+      empty.innerHTML = '<svg class="empty-art" aria-hidden="true" viewBox="0 0 80 80"><circle class="art-mint" cx="40" cy="40" r="34"/><rect class="art-paper" x="24" y="16" width="35" height="46" rx="6" transform="rotate(8 40 40)"/><path class="art-line" d="m33 29 16 2m-17 7 16 2m-17 7 10 1"/><circle class="art-butter" cx="61" cy="58" r="10"/></svg><span>No posts yet</span><p>Your saved posts will appear here.</p>';
       root.appendChild(empty);
       return;
     }

@@ -1,7 +1,6 @@
 /**
  * Reasoning: tags.json lives inside each post folder so a post stays self
- * contained when copied. Dual write keeps the mirror
- * in sync with the working copy.
+ * contained when copied. Dual write keeps Recovery synchronized with Active.
  */
 const fs = require("fs");
 const path = require("path");
@@ -21,7 +20,7 @@ function writeTagsFile(dir, tags) {
 
 async function listTagsForPost(id) {
   const paths = getPostPaths(id);
-  return readTagsFile(paths.working);
+  return readTagsFile(paths.active);
 }
 
 async function addTagToPost(id, tagName) {
@@ -30,7 +29,7 @@ async function addTagToPost(id, tagName) {
     throw new Error("Tag name is empty");
   }
   const paths = getPostPaths(id);
-  const tags = readTagsFile(paths.working);
+  const tags = readTagsFile(paths.active);
   const lower = cleaned.toLowerCase();
   let exists = false;
   for (let i = 0; i < tags.length; i++) {
@@ -42,8 +41,16 @@ async function addTagToPost(id, tagName) {
   if (!exists) {
     tags.push(cleaned);
   }
-  writeTagsFile(paths.working, tags);
-  writeTagsFile(paths.mirror, tags);
+  const previousActive = readTagsFile(paths.active);
+  const previousRecovery = readTagsFile(paths.recovery);
+  try {
+    writeTagsFile(paths.recovery, tags);
+    writeTagsFile(paths.active, tags);
+  } catch (error) {
+    writeTagsFile(paths.recovery, previousRecovery);
+    writeTagsFile(paths.active, previousActive);
+    throw error;
+  }
   return tags;
 }
 

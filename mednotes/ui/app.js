@@ -9,9 +9,9 @@ const postList = createPostList({
   onAddTag: id => openEditor("tag", id, ""),
   onDelete: function handleDelete(id) {
     window.mednotes.deletePost(id).then(function afterDelete() {
-      return refreshList();
+      return Promise.all([refreshList(), refreshTrashCount()]);
     }).catch(function onDeleteError(err) {
-      alert(err.message);
+      alert("Could not move post to Trash: " + err.message);
     });
   },
 });
@@ -27,8 +27,128 @@ const composer = createComposer({
 async function refreshList() {
   const posts = await window.mednotes.readPosts();
   postList.render(posts);
-  document.getElementById("note-count").textContent = posts.length + (posts.length === 1 ? " note" : " notes");
+  document.getElementById("note-count").textContent = posts.length + (posts.length === 1 ? " post" : " posts");
 }
+
+const trashDialog = document.getElementById("trash-dialog");
+const trashList = document.getElementById("trash-list");
+const trashStatus = document.getElementById("trash-status");
+const emptyTrashButton = document.getElementById("empty-trash");
+let trashFocus = null;
+
+function createTrashPost(post) {
+  const card = document.createElement("article");
+  card.className = "trash-post";
+  const meta = document.createElement("p");
+  meta.className = "post-meta";
+  meta.textContent = post.deletedAt ? "Deleted " + formatPostDate(post.deletedAt) : "Deletion time unavailable";
+  const text = document.createElement("pre");
+  text.className = "post-text";
+  text.textContent = post.text;
+  const details = document.createElement("p");
+  details.className = "trash-details";
+  const attachments = [];
+  if (post.hasImage) attachments.push("photo");
+  if (post.hasVoice) attachments.push("voice");
+  details.textContent = attachments.length ? "Includes " + attachments.join(" and ") : "Text post";
+  const actions = document.createElement("div");
+  actions.className = "trash-actions";
+  const restore = document.createElement("button");
+  restore.type = "button";
+  restore.textContent = "Restore";
+  restore.addEventListener("click", async function restoreDeletedPost() {
+    restore.disabled = true;
+    try {
+      await window.mednotes.restorePost(post.id);
+      await Promise.all([refreshList(), loadTrash()]);
+    } catch (error) {
+      trashStatus.textContent = "Could not restore post: " + error.message;
+      restore.disabled = false;
+    }
+  });
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.textContent = "Delete forever";
+  remove.addEventListener("click", async function permanentlyDeletePost() {
+    if (!window.confirm("Delete this post forever? This cannot be undone.")) return;
+    remove.disabled = true;
+    try {
+      await window.mednotes.deletePostForever(post.id);
+      await loadTrash();
+    } catch (error) {
+      trashStatus.textContent = "Could not permanently delete post: " + error.message;
+      remove.disabled = false;
+    }
+  });
+  actions.append(restore, remove);
+  card.append(meta, text, details, actions);
+  return card;
+}
+
+async function loadTrash() {
+  trashStatus.textContent = "Loading Trash…";
+  try {
+    const posts = await window.mednotes.readTrashPosts();
+    trashList.replaceChildren();
+    for (const post of posts) trashList.appendChild(createTrashPost(post));
+    if (!posts.length) {
+      const empty = document.createElement("p");
+      empty.className = "trash-empty";
+      empty.textContent = "Trash is empty.";
+      trashList.appendChild(empty);
+    }
+    trashStatus.textContent = posts.length + (posts.length === 1 ? " deleted post" : " deleted posts");
+    document.getElementById("trash-count").textContent = String(posts.length);
+    emptyTrashButton.disabled = posts.length === 0;
+  } catch (error) {
+    trashList.replaceChildren();
+    trashStatus.textContent = "Could not load Trash: " + error.message;
+    emptyTrashButton.disabled = true;
+  }
+}
+
+async function refreshTrashCount() {
+  try {
+    const posts = await window.mednotes.readTrashPosts();
+    document.getElementById("trash-count").textContent = String(posts.length);
+  } catch (error) {
+    console.error("Could not refresh Trash count", error);
+  }
+}
+
+const railLinks = document.querySelectorAll(".rail-link");
+const postsLink = document.querySelector('a[href="#notes-section"]');
+postsLink.addEventListener("click", function showPosts() {
+  railLinks.forEach(link => link.classList.remove("is-active"));
+  this.classList.add("is-active");
+});
+document.getElementById("open-trash").addEventListener("click", async function openTrash() {
+  railLinks.forEach(link => link.classList.remove("is-active"));
+  this.classList.add("is-active");
+  trashFocus = document.activeElement;
+  await loadTrash();
+  trashDialog.showModal();
+});
+document.getElementById("close-trash").addEventListener("click", function closeTrash() {
+  trashFocus = postsLink;
+  trashDialog.close();
+  railLinks.forEach(link => link.classList.remove("is-active"));
+  postsLink.classList.add("is-active");
+});
+trashDialog.addEventListener("close", function restoreTrashFocus() {
+  if (trashFocus && trashFocus.isConnected) trashFocus.focus();
+});
+emptyTrashButton.addEventListener("click", async function emptyAllTrash() {
+  if (!window.confirm("Permanently delete every post in Trash? This cannot be undone.")) return;
+  emptyTrashButton.disabled = true;
+  try {
+    await window.mednotes.emptyTrash();
+    await loadTrash();
+  } catch (error) {
+    trashStatus.textContent = "Could not empty Trash: " + error.message;
+    emptyTrashButton.disabled = false;
+  }
+});
 
 const editDialog = document.getElementById("edit-dialog");
 const editText = document.getElementById("edit-text");
@@ -40,7 +160,7 @@ let editorFocus = null;
 function openEditor(mode, id, text) {
   editorFocus = document.activeElement;
   editorState = { mode, id };
-  document.getElementById("edit-title").textContent = mode === "edit" ? "Edit note" : "Add a tag";
+  document.getElementById("edit-title").textContent = mode === "edit" ? "Edit post" : "Add a tag";
   editSave.textContent = mode === "edit" ? "Save changes" : "Add tag";
   editText.value = text;
   editTag.value = "";
@@ -69,7 +189,7 @@ document.getElementById("edit-form").addEventListener("submit", async event => {
   if (editSave.disabled || !editorState) return;
   const { mode, id } = editorState;
   const value = (mode === "edit" ? editText.value : editTag.value).trim();
-  if (!value) { editStatus.textContent = "Please enter " + (mode === "edit" ? "note text." : "a tag name."); return; }
+  if (!value) { editStatus.textContent = "Please enter " + (mode === "edit" ? "post text." : "a tag name."); return; }
   editSave.disabled = true;
   editText.disabled = true;
   editTag.disabled = true;
@@ -146,11 +266,11 @@ document.getElementById("search-form").addEventListener("submit", async event =>
   const query = searchInput.value.trim();
   searchResults.replaceChildren();
   if (!query) { searchStatus.textContent = "Enter a search, then press Enter."; return; }
-  searchStatus.textContent = "Searching your notes…";
+  searchStatus.textContent = "Searching your posts…";
   try {
     const results = await window.mednotes.searchPosts({ query, ...dateFilter.getRange() });
     if (version !== searchVersion || !searchDialog.open) return;
-    searchStatus.textContent = results.length ? results.length + (results.length === 1 ? " result" : " results") + " · Select a note to open it" : "No matching notes. Try another search or date range.";
+    searchStatus.textContent = results.length ? results.length + (results.length === 1 ? " result" : " results") + " · Select a post to open it" : "No matching posts. Try another search or date range.";
     for (const post of results) {
       const button = document.createElement("button");
       button.type = "button";
@@ -173,7 +293,7 @@ document.getElementById("search-form").addEventListener("submit", async event =>
   }
 });
 
-refreshList().then(function afterInitialLoad() {
+Promise.all([refreshList(), refreshTrashCount()]).then(function afterInitialLoad() {
   composer.focus();
 }).catch(function onLoadError(err) {
   console.error(err);

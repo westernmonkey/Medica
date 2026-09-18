@@ -112,8 +112,8 @@ async function run() {
   await countedClick("#save-btn");
   await window.waitForSelector(".post-text");
 
-  const workingRoot = path.join(tmpRoot, "working");
-  const mirrorRoot = path.join(tmpRoot, "mirror");
+  const workingRoot = path.join(tmpRoot, "active");
+  const mirrorRoot = path.join(tmpRoot, "recovery");
 
   async function waitForPostDir(timeoutMs) {
     const start = Date.now();

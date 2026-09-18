@@ -8,7 +8,13 @@ const path = require("path");
 
 const { savePost } = require("./storage/save-post");
 const { editPost } = require("./storage/edit-post");
-const { deletePost } = require("./storage/delete-post");
+const {
+  deletePost,
+  restorePost,
+  deletePostForever,
+  emptyTrash,
+  readTrashPosts,
+} = require("./storage/delete-post");
 const { readPosts } = require("./storage/read-posts");
 const { searchPosts } = require("./search/search-posts");
 const { addTagToPost, listTagsForPost } = require("./tags/tag-store");
@@ -67,6 +73,26 @@ function registerIpcHandlers() {
     await deletePost(id);
     await refreshPostsCache();
     return { ok: true };
+  });
+
+  ipcMain.handle("read-trash-posts", async function handleReadTrashPosts() {
+    return readTrashPosts();
+  });
+
+  ipcMain.handle("restore-post", async function handleRestorePost(_event, id) {
+    await restorePost(id);
+    await refreshPostsCache();
+    return { ok: true };
+  });
+
+  ipcMain.handle("delete-post-forever", async function handleDeletePostForever(_event, id) {
+    await deletePostForever(id);
+    return { ok: true };
+  });
+
+  ipcMain.handle("empty-trash", async function handleEmptyTrash() {
+    const result = await emptyTrash();
+    return result;
   });
 
   ipcMain.handle("search-posts", async function handleSearchPosts(_event, payload) {

@@ -1,10 +1,10 @@
 /**
  * Reasoning: Search needs every vector in memory once at startup. Reading from
- * the working folder is enough; the mirror is not a second index.
+ * the active folder is enough; Recovery is not a second search index.
  */
 const fs = require("fs");
 const path = require("path");
-const { getWorkingRoot, ensureRootsExist } = require("./paths");
+const { ensureRootsExist } = require("./paths");
 
 function readTags(postDir) {
   const tagsPath = path.join(postDir, "tags.json");
@@ -26,8 +26,8 @@ function parseCreatedAtFromId(id) {
   return date.toISOString();
 }
 
-function readOnePost(postId, workingRoot) {
-  const postDir = path.join(workingRoot, postId);
+function readOnePost(postId, activeRoot) {
+  const postDir = path.join(activeRoot, postId);
   const textPath = path.join(postDir, "text.md");
   const vectorPath = path.join(postDir, "vector.bin");
   if (!fs.existsSync(textPath) || !fs.existsSync(vectorPath)) {
@@ -59,14 +59,14 @@ function readOnePost(postId, workingRoot) {
 
 async function readPosts() {
   const roots = ensureRootsExist();
-  const entries = fs.readdirSync(roots.working, { withFileTypes: true });
+  const entries = fs.readdirSync(roots.active, { withFileTypes: true });
   const posts = [];
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     if (!entry.isDirectory()) {
       continue;
     }
-    const post = readOnePost(entry.name, roots.working);
+    const post = readOnePost(entry.name, roots.active);
     if (post) {
       posts.push(post);
     }

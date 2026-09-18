@@ -1,6 +1,6 @@
 /**
  * Reasoning: Each post is a folder so media and text stay together and stay
- * readable outside the app. Dual write to working + mirror happens here so every
+ * readable outside the app. Dual write to active + recovery happens here so every
  * caller gets both copies without repeating that logic.
  */
 const fs = require("fs");
@@ -30,12 +30,24 @@ function writePostFiles(dir, payload) {
   }
 }
 
+function removeDirectoryIfPresent(dir) {
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 async function savePost(payload) {
   ensureRootsExist();
   const id = makePostId();
   const paths = getPostPaths(id);
-  writePostFiles(paths.working, payload);
-  writePostFiles(paths.mirror, payload);
+  try {
+    writePostFiles(paths.recovery, payload);
+    writePostFiles(paths.active, payload);
+  } catch (error) {
+    removeDirectoryIfPresent(paths.active);
+    removeDirectoryIfPresent(paths.recovery);
+    throw error;
+  }
   return {
     id: id,
     text: payload.text,
