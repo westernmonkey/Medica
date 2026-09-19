@@ -5,9 +5,9 @@
  */
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { loadModel } = require("../embedding/load-model");
-const { embedText } = require("../embedding/embed-text");
-const { embedTextAsync, shutdownEmbeddingWorker } = require("../embedding/embedding-worker");
+const { loadModel } = require("../services/embedding/load-model");
+const { embedText } = require("../services/embedding/embed-text");
+const { embedTextAsync, shutdownEmbeddingWorker } = require("../services/embedding/embedding-worker");
 
 test("bundled model loads offline and embeds to 384 dims", async function testOfflineEmbed() {
   const loadStart = Date.now();

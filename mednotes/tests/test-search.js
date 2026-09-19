@@ -4,10 +4,10 @@
  */
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { embedText } = require("../embedding/embed-text");
-const { cosineSimilarity } = require("../search/cosine-similarity");
-const { searchPosts } = require("../search/search-posts");
-const { shutdownEmbeddingWorker } = require("../embedding/embedding-worker");
+const { embedText } = require("../services/embedding/embed-text");
+const { cosineSimilarity } = require("../services/search/cosine-similarity");
+const { searchPosts } = require("../services/search/search-posts");
+const { shutdownEmbeddingWorker } = require("../services/embedding/embedding-worker");
 
 test("cosineSimilarity is 1 for identical vectors", function testCosineIdentical() {
   const a = new Float32Array([1, 0, 0]);

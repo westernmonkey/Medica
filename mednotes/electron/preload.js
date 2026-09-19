@@ -1,6 +1,6 @@
 /**
  * Reasoning: The renderer must not get Node or fs. preload.js is the only bridge.
- * Each method maps 1:1 to an ipcMain handler in main.js.
+ * Each method maps 1:1 to an ipcMain handler in register-ipc.js.
  */
 const { contextBridge, ipcRenderer } = require("electron");
 

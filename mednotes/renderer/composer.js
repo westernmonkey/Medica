@@ -3,7 +3,7 @@
  * Reasoning: One always-visible composer keeps capture friction low. Mic, camera,
  * paste, and drag all attach the same way so the save path stays single.
  */
-function createComposer(options) {
+export function createComposer(options) {
   const root = options.root;
   const onSave = options.onSave;
 

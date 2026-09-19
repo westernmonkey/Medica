@@ -12,11 +12,11 @@ const path = require("path");
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "mednotes-storage-"));
 process.env.MEDNOTES_HOME = tmpRoot;
 
-const { savePost } = require("../storage/save-post");
-const { editPost } = require("../storage/edit-post");
-const { deletePost, restorePost, deletePostForever, emptyTrash, readTrashPosts } = require("../storage/delete-post");
-const { readPosts } = require("../storage/read-posts");
-const { ensureRootsExist, getPostPaths } = require("../storage/paths");
+const { savePost } = require("../services/storage/save-post");
+const { editPost } = require("../services/storage/edit-post");
+const { deletePost, restorePost, deletePostForever, emptyTrash, readTrashPosts } = require("../services/storage/delete-post");
+const { readPosts } = require("../services/storage/read-posts");
+const { ensureRootsExist, getPostPaths } = require("../services/storage/paths");
 
 function makeFakeJpeg() {
   return Buffer.from([

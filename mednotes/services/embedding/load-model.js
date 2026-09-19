@@ -19,7 +19,7 @@ async function loadModel() {
 
     env.allowLocalModels = true;
     env.allowRemoteModels = false;
-    env.localModelPath = path.join(__dirname, "..", "models");
+    env.localModelPath = path.join(__dirname, "..", "..", "models");
 
     const extractor = await pipeline(
       "feature-extraction",

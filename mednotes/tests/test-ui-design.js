@@ -49,7 +49,7 @@ const { _electron: electron } = require('playwright');
     assert.equal(await page.locator('.side-rail').count(), 1);
     assert.equal(await page.locator('.identity-panel').count(), 1);
     assert.ok(await page.locator('.medica-logo').evaluate(el => el.complete && el.naturalWidth > 0));
-    assert.ok(fs.readFileSync(path.join(__dirname, '../ui/assets/medica-logo.png')).equals(fs.readFileSync(path.join(__dirname, '../../public/Medica-logo.png'))));
+    assert.ok(fs.readFileSync(path.join(__dirname, '../renderer/assets/medica-logo.png')).equals(fs.readFileSync(path.join(__dirname, '../../public/Medica-logo.png'))));
     const shortcut = process.platform === 'darwin' ? 'Meta+k' : 'Control+k';
     await page.locator('#composer-text').focus();
     await page.keyboard.press(shortcut);

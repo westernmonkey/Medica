@@ -1,4 +1,8 @@
 // Visual styling uses ../DESIGN.md tokens in styles.css.
+import { createDateFilter } from "./date-filter.js";
+import { createPostList, formatPostDate } from "./post-list.js";
+import { createComposer } from "./composer.js";
+
 const dateFilter = createDateFilter({
   root: document.getElementById("date-filter"),
 });

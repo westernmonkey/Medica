@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local offline medical notes with semantic search",
-  "main": "main.js",
+  "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
     "test": "node --test tests/test-save-post.js tests/test-embedding.js tests/test-search.js",

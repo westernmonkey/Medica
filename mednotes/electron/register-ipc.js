@@ -1,40 +1,23 @@
 /**
- * Reasoning: Electron needs one main-process entry that creates the window and
- * wires IPC. Disk, embedding, search, and tags stay out of this file so
- * each can be tested without launching a window.
+ * Connects renderer requests to local MedNotes services.
  */
-const { app, BrowserWindow, ipcMain, session } = require("electron");
-const path = require("path");
+const { ipcMain } = require("electron");
 
-const { savePost } = require("./storage/save-post");
-const { editPost } = require("./storage/edit-post");
+const { savePost } = require("../services/storage/save-post");
+const { editPost } = require("../services/storage/edit-post");
 const {
   deletePost,
   restorePost,
   deletePostForever,
   emptyTrash,
   readTrashPosts,
-} = require("./storage/delete-post");
-const { readPosts } = require("./storage/read-posts");
-const { searchPosts } = require("./search/search-posts");
-const { addTagToPost, listTagsForPost } = require("./tags/tag-store");
-const { embedTextAsync } = require("./embedding/embedding-worker");
+} = require("../services/storage/delete-post");
+const { readPosts } = require("../services/storage/read-posts");
+const { searchPosts } = require("../services/search/search-posts");
+const { addTagToPost, listTagsForPost } = require("../services/tags/tag-store");
+const { embedTextAsync } = require("../services/embedding/embedding-worker");
 
-let mainWindow = null;
 let postsCache = [];
-
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 960,
-    height: 720,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-  mainWindow.loadFile(path.join(__dirname, "ui", "index.html"));
-}
 
 async function refreshPostsCache() {
   postsCache = await readPosts();
@@ -85,20 +68,20 @@ function registerIpcHandlers() {
     return { ok: true };
   });
 
-  ipcMain.handle("delete-post-forever", async function handleDeletePostForever(_event, id) {
+  ipcMain.handle("delete-post-forever", async function handleDeleteForever(_event, id) {
     await deletePostForever(id);
     return { ok: true };
   });
 
   ipcMain.handle("empty-trash", async function handleEmptyTrash() {
-    const result = await emptyTrash();
-    return result;
+    return emptyTrash();
   });
 
   ipcMain.handle("search-posts", async function handleSearchPosts(_event, payload) {
     if (postsCache.length === 0) {
       await refreshPostsCache();
     }
+
     const queryVector = await embedTextAsync(payload.query);
     return searchPosts({
       posts: postsCache,
@@ -117,45 +100,9 @@ function registerIpcHandlers() {
   ipcMain.handle("list-tags", async function handleListTags(_event, id) {
     return listTagsForPost(id);
   });
-
 }
 
-app.whenReady().then(async function onReady() {
-  if (process.defaultApp) {
-    app.setAsDefaultProtocolClient(
-      "mednotes",
-      process.execPath,
-      [path.resolve(process.argv[1])]
-    );
-  } else {
-    app.setAsDefaultProtocolClient("mednotes");
-  }
-
-  session.defaultSession.setPermissionRequestHandler(function handlePermission(
-    _webContents,
-    permission,
-    callback
-  ) {
-    if (permission === "media" || permission === "mediaKeySystem") {
-      callback(true);
-      return;
-    }
-    callback(false);
-  });
-
-  registerIpcHandlers();
-  await refreshPostsCache();
-  createWindow();
-
-  app.on("activate", function onActivate() {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on("window-all-closed", function onWindowAllClosed() {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+module.exports = {
+  refreshPostsCache: refreshPostsCache,
+  registerIpcHandlers: registerIpcHandlers,
+};

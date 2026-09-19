@@ -1,4 +1,4 @@
-function formatPostDate(value) {
+export function formatPostDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
@@ -9,7 +9,7 @@ function formatPostDate(value) {
  * Reasoning: List and search share one renderer so tag pills and attachment
  * markers stay consistent. Edit/tag actions live on the selected post row.
  */
-function createPostList(options) {
+export function createPostList(options) {
   const root = options.root;
   const onEdit = options.onEdit;
   const onAddTag = options.onAddTag;

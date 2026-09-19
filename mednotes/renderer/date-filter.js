@@ -2,7 +2,7 @@
  * Reasoning: Date bounds are optional. Empty means no filter. Values are ISO
  * date strings passed straight into searchPosts.
  */
-function createDateFilter(options) {
+export function createDateFilter(options) {
   const root = options.root;
 
   root.innerHTML = "";

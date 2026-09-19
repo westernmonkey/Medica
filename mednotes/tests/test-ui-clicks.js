@@ -211,9 +211,9 @@ async function run() {
 
   // Direct API check for edit dual-write (storage already unit-tested; confirm live folders)
   process.env.MEDNOTES_HOME = tmpRoot;
-  const { editPost } = require("../storage/edit-post");
-  const { embedText } = require("../embedding/embed-text");
-  const { shutdownEmbeddingWorker } = require("../embedding/embedding-worker");
+  const { editPost } = require("../services/storage/edit-post");
+  const { embedText } = require("../services/embedding/embed-text");
+  const { shutdownEmbeddingWorker } = require("../services/embedding/embedding-worker");
   const newText = "Edited E2E note about PE vs pneumonia.";
   const newVector = await embedText(newText);
   await editPost({ id: postId, text: newText, vector: newVector });
