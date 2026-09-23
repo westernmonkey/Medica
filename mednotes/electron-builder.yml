@@ -1,0 +1,57 @@
+appId: app.medica.mednotes
+productName: MedNotes
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - electron/**/*
+  - renderer/**/*
+  - services/**/*
+  - package.json
+
+extraResources:
+  - from: models
+    to: models
+
+asarUnpack:
+  - node_modules/onnxruntime-node/**/*
+
+protocols:
+  - name: MedNotes
+    schemes:
+      - mednotes
+
+mac:
+  icon: build/icon.icns
+  target:
+    - target: dmg
+      arch:
+        - universal
+  category: public.app-category.productivity
+  identity: "-"
+  hardenedRuntime: false
+  artifactName: MedNotes-${version}-universal.${ext}
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+
+dmg:
+  title: MedNotes
+  backgroundColor: "#edf8f2"
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 130
+      y: 220
+      type: file
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
