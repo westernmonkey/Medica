@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const BANK_ROOT = path.join(process.cwd(), "public", "bank");
+const BANK_ROOT = path.join(process.cwd(), "data", "question-bank", "source");
 const MODEL = process.env.TOPIC_ENCODER_MODEL || "qwen2.5:14b";
 const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
 const SHOULD_WRITE = process.argv.includes("--write");

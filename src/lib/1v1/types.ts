@@ -28,6 +28,8 @@ export type Match = {
   questions: Question[];
   answers: Record<string, RoundAnswer>;
   roundWinnerId: string | null;
+  roundEndsAt: number | null;
+  revision: number;
 };
 
 export type PublicOption = {
@@ -50,4 +52,5 @@ export type PublicMatch = {
   answers: Record<string, RoundAnswer>;
   roundWinnerId: string | null;
   correctOptionId: string | null;
+  revision: number;
 };

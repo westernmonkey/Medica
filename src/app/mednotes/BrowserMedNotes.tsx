@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addTag, connectFolder, deleteForever, editPost, emptyTrash,
-  connectBackupFolder, exportBackup, importBackup, initializeStore, moveToTrash, readPosts, readTrash,
-  reconnectBackupFolder, reconnectFolder, restorePost, savePost, type BackupState, type Post,
+  connectRecoveryFolder, exportBackup, importBackup, initializeStore, moveToTrash, readPosts, readTrash,
+  reconnectRecoveryFolder, reconnectFolder, restorePost, savePost, type RecoveryState, type Post,
 } from "./browser-store";
 import { embedText } from "./embeddings";
 import { rankPosts } from "./search";
@@ -46,11 +46,11 @@ function Icon({ name }: { name: "search" | "note" | "trash" | "mic" | "camera" |
 
 export default function BrowserMedNotes() {
   const [storeState, setStoreState] = useState<StoreState>("folder-required");
-  const [backupState, setBackupState] = useState<BackupState>("folder-required");
+  const [recoveryState, setRecoveryState] = useState<RecoveryState>("folder-required");
   const [backend, setBackend] = useState<"folder" | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [notesFolderName, setNotesFolderName] = useState("");
-  const [backupFolderName, setBackupFolderName] = useState("");
+  const [recoveryFolderName, setRecoveryFolderName] = useState("");
   const [trash, setTrash] = useState<Post[]>([]);
   const [text, setText] = useState("");
   const [image, setImage] = useState<Blob | null>(null);
@@ -95,10 +95,10 @@ export default function BrowserMedNotes() {
   useEffect(() => {
     initializeStore().then(async result => {
       setStoreState(result.state);
-      setBackupState(result.backupState);
+      setRecoveryState(result.recoveryState);
       setBackend(result.backend);
       setNotesFolderName(result.notesFolderName);
-      setBackupFolderName(result.backupFolderName);
+      setRecoveryFolderName(result.recoveryFolderName);
       if (result.state === "ready") await refresh();
     }).catch(error => setStatus(`Could not open local storage: ${error.message}`));
   }, [refresh]);
@@ -139,50 +139,43 @@ export default function BrowserMedNotes() {
 
   const tags = useMemo(() => Array.from(new Set(posts.flatMap(post => post.tags))).sort((a, b) => a.localeCompare(b)), [posts]);
   const visiblePosts = useMemo(() => tagFilter ? posts.filter(post => post.tags.includes(tagFilter)) : posts, [posts, tagFilter]);
+  const workspaceReady = storeState === "ready" && recoveryState === "ready";
 
   async function activateStore(connect = false) {
     setStatus("");
     try {
       const result = connect ? await connectFolder() : await reconnectFolder();
       setStoreState(result.state);
-      setBackupState(result.backupState);
+      setRecoveryState(result.recoveryState);
       setBackend(result.backend);
       setNotesFolderName(result.notesFolderName);
-      setBackupFolderName(result.backupFolderName);
+      setRecoveryFolderName(result.recoveryFolderName);
       await refresh();
       if ("migrationError" in result && result.migrationError) setStatus(`Notes folder connected, but older browser notes could not be copied: ${result.migrationError}`);
       else if ("migratedPosts" in result && result.migratedPosts) setStatus(`Copied ${result.migratedPosts} older browser ${result.migratedPosts === 1 ? "post" : "posts"} into this folder. The old copies were kept.`);
     } catch (error) { setStatus(`Could not connect storage: ${(error as Error).message}`); }
   }
 
-  async function chooseBackupFolder() {
+  async function chooseRecoveryFolder(reconnect = false) {
     try {
-      const result = await connectBackupFolder();
-      setBackupState(result.backupState);
-      setBackupFolderName(result.backupFolderName);
-      setStatus("Backup folder selected.");
-    } catch (error) { setStatus(`Could not connect backup folder: ${(error as Error).message}`); }
+      const result = reconnect ? await reconnectRecoveryFolder() : await connectRecoveryFolder();
+      setRecoveryState(result.recoveryState);
+      setRecoveryFolderName(result.recoveryFolderName);
+      await refresh();
+      setStatus("Separate recovery folder selected and synchronized.");
+    } catch (error) { setStatus(`Could not connect recovery folder: ${(error as Error).message}`); }
   }
 
   async function createBackup() {
     try {
-      if (backupState === "folder-required") {
-        const result = await connectBackupFolder();
-        setBackupState(result.backupState);
-        setBackupFolderName(result.backupFolderName);
-      } else if (backupState === "permission-required") {
-        const result = await reconnectBackupFolder();
-        setBackupState(result.backupState);
-        setBackupFolderName(result.backupFolderName);
-      }
       const filename = await exportBackup();
-      setStatus(`Backup saved in your backup folder: ${filename}`);
+      setStatus(`ZIP backup saved in your recovery folder: ${filename}`);
     } catch (error) { setStatus(`Backup failed: ${(error as Error).message}`); }
   }
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || !workspaceReady) return;
     const cleaned = text.trim();
     if (!cleaned && !image && !voice) return;
     setSaving(true);
@@ -286,13 +279,13 @@ export default function BrowserMedNotes() {
         <header className={styles.top}>
           <div className={styles.brand}><span className={styles.brandDivider}/><span>Your posts</span></div>
           <div className={styles.topActions}>
-            {storeState === "ready" && <span className={styles.storageLabel}>Notes: {notesFolderName}{backupState === "ready" ? ` · Backup: ${backupFolderName}` : " · Backup folder not set"}</span>}
+            {storeState === "ready" && <span className={styles.storageLabel}>Notes: {notesFolderName}{recoveryState === "ready" ? ` · Recovery: ${recoveryFolderName}` : " · Recovery folder not set"}</span>}
             {backend === "folder" && storeState === "ready" && <button type="button" className={styles.storageButton} onClick={() => activateStore(true)}><Icon name="folder"/> Change notes folder</button>}
-            {storeState === "ready" && <>
-              <button type="button" className={styles.backupButton} onClick={createBackup}>{backupState === "ready" ? "Create backup" : backupState === "permission-required" ? "Reconnect & back up" : "Choose backup folder & back up"}</button>
-              {backupState === "ready" && <button type="button" className={styles.backupButton} onClick={chooseBackupFolder}>Change backup folder</button>}
+            {workspaceReady && <>
+              <button type="button" className={styles.backupButton} onClick={createBackup}>Create ZIP backup</button>
+              <button type="button" className={styles.backupButton} onClick={() => chooseRecoveryFolder()}>Change recovery folder</button>
             </>}
-            {storeState === "ready" && <button type="button" className={styles.backupButton} onClick={() => backupRef.current?.click()}>Import backup file</button>}
+            {workspaceReady && <button type="button" className={styles.backupButton} onClick={() => backupRef.current?.click()}>Import backup file</button>}
             <input ref={backupRef} type="file" accept=".zip,application/zip" className={styles.hidden} onChange={event => handleImport(event.target.files?.[0])}/>
             <button id="open-search" type="button" className={styles.searchButton} onClick={openSearch}><Icon name="search"/> Search <kbd>{shortcut}</kbd></button>
           </div>
@@ -308,34 +301,34 @@ export default function BrowserMedNotes() {
           <div className={styles.panelHeading}><span className={styles.headingIcon}>✎</span><h2>New post</h2><span className={styles.panelDecoration} aria-hidden="true">✳</span></div>
           <form className={styles.composer} onSubmit={handleSave}>
             <div className={styles.captureField}>
-              <textarea ref={composerRef} id="composer-text" value={text} onChange={event => setText(event.target.value)} placeholder="Type a post…" aria-label="Post text" disabled={storeState !== "ready"}/>
+              <textarea ref={composerRef} id="composer-text" value={text} onChange={event => setText(event.target.value)} placeholder="Type a post…" aria-label="Post text" disabled={!workspaceReady}/>
               <div className={styles.captureActions}>
-                <button type="button" className={styles.iconButton} onClick={toggleRecording} aria-label={recording ? "Stop recording" : "Record voice post"}><Icon name={recording ? "delete" : "mic"}/></button>
-                <button type="button" className={styles.iconButton} onClick={() => fileRef.current?.click()} aria-label="Attach photo"><Icon name="camera"/></button>
+                <button type="button" className={styles.iconButton} onClick={toggleRecording} aria-label={recording ? "Stop recording" : "Record voice post"} disabled={!workspaceReady}><Icon name={recording ? "delete" : "mic"}/></button>
+                <button type="button" className={styles.iconButton} onClick={() => fileRef.current?.click()} aria-label="Attach photo" disabled={!workspaceReady}><Icon name="camera"/></button>
                 <input ref={fileRef} type="file" accept="image/*" className={styles.hidden} onChange={event => setImage(event.target.files?.[0] || null)}/>
               </div>
             </div>
             <div className={styles.composerToolbar}>
               <span className={recording ? styles.recording : styles.attachStatus}>{recording ? "Recording" : [image && "photo", voice && "voice"].filter(Boolean).join(" · ") || "Saved only on this device"}</span>
-              <button className={styles.saveButton} type="submit" disabled={saving || storeState !== "ready"}>{saving ? "Saving…" : "Save"}</button>
+              <button className={styles.saveButton} type="submit" disabled={saving || !workspaceReady}>{saving ? "Saving…" : "Save"}</button>
             </div>
           </form>
         </section>
 
         <section className={styles.postsSection} id="posts" aria-label="Your posts">
           <div className={styles.postsHeading}><div><span className={styles.postsIcon}><Icon name="note"/></span><h2>Posts</h2><span className={styles.countChip}>{posts.length}</span></div><label className={styles.tagFilter}>Filter by tag <select aria-label="Filter by tag" value={tagFilter} onChange={event => setTagFilter(event.target.value)}><option value="">All tags</option>{tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}</select></label></div>
-          {storeState !== "ready" && <div className={styles.storageNotice} role="status">
-            <strong>{storeState === "unsupported" ? "MedNotes needs browser folder access." : storeState === "folder-required" ? "Choose where MedNotes should save your posts." : "MedNotes needs permission to open your notes folder."}</strong>
-            <p>{storeState === "unsupported" ? "Use the latest Chrome or Edge over HTTPS (or localhost). This browser does not support choosing a local folder, so MedNotes will not save posts here." : storeState === "folder-required" ? "Choose a folder for your notes. MedNotes will create active, .trash, and recovery inside it." : "Your saved folder is remembered, but its permission needs to be restored."}</p>
-            {storeState !== "unsupported" && <button type="button" className={styles.saveButton} onClick={() => activateStore(storeState === "folder-required")}>{storeState === "folder-required" ? "Choose notes folder" : "Reconnect notes folder"}</button>}
-            {backend === "folder" && <p className={styles.storageFine}>Posts stay in the folder you selected on this device.</p>}
+          {!workspaceReady && <div className={styles.storageNotice} role="status">
+            <strong>{storeState === "unsupported" ? "MedNotes needs browser folder access." : storeState === "folder-required" ? "Choose where MedNotes should save your posts." : storeState === "permission-required" ? "MedNotes needs permission to open your notes folder." : recoveryState === "permission-required" ? "MedNotes needs permission to open your recovery folder." : storeState === "ready" && recoveryState === "separate-folder-required" ? "Choose a separate recovery folder." : "Choose a recovery folder for your notes."}</strong>
+            <p>{storeState === "unsupported" ? "Use the latest Chrome or Edge over HTTPS (or localhost). This browser does not support choosing a local folder, so MedNotes will not save posts here." : storeState === "folder-required" ? "Choose your notes folder first. MedNotes will create active and .trash inside it." : storeState === "permission-required" ? "Your notes folder is remembered, but its permission needs to be restored." : recoveryState === "permission-required" ? "Your recovery folder is remembered, but its permission needs to be restored." : "Choose a different folder from your notes folder. Active posts and Trash stay in the notes folder; synchronized recovery copies and ZIP backups go in this separate folder."}</p>
+            {storeState !== "unsupported" && (storeState !== "ready" ? <button type="button" className={styles.saveButton} onClick={() => activateStore(storeState === "folder-required")}>{storeState === "folder-required" ? "Choose notes folder" : "Reconnect notes folder"}</button> : <button type="button" className={styles.saveButton} onClick={() => chooseRecoveryFolder(recoveryState === "permission-required")}>{recoveryState === "permission-required" ? "Reconnect recovery folder" : "Choose recovery folder"}</button>)}
+            {backend === "folder" && <p className={styles.storageFine}>Posts stay on this device, split between the two folders you select.</p>}
           </div>}
           {storeState === "ready" && posts.length === 0 && <div className={styles.empty}><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34"/><rect x="24" y="16" width="35" height="46" rx="6"/><path d="m33 29 16 2m-17 7 16 2m-17 7 10 1"/></svg><strong>No posts yet</strong><span>Your saved posts will appear here.</span></div>}
           {storeState === "ready" && posts.length > 0 && visiblePosts.length === 0 && <p className={styles.empty}>No posts use this tag yet.</p>}
           <div className={styles.postGrid}>{visiblePosts.map((post, index) => <article className={`${styles.post} ${index % 3 === 1 ? styles.postLilac : index % 3 === 2 ? styles.postButter : ""}`} key={post.id} data-post-id={post.id} tabIndex={-1}>
             <div className={styles.postMeta}>{dateLabel(post.createdAt)}</div><PostMedia blob={post.image}/><pre className={styles.postText}>{post.text}</pre><PostMedia blob={post.voice} audio/>
             <div className={styles.tagRow}>{post.tags.map(tag => <span key={tag} className={styles.tagPill}>{tag}</span>)}</div>
-            <div className={styles.postActions}><button type="button" onClick={() => beginEdit(post)}><Icon name="edit"/> Edit text</button><button type="button" onClick={() => { setTagPost(post); setTagText(""); setDialogError(""); }}><Icon name="tag"/> Add tag</button><button type="button" onClick={() => doDelete(post)}><Icon name="delete"/> Delete</button></div>
+            <div className={styles.postActions}><button type="button" onClick={() => beginEdit(post)} disabled={!workspaceReady}><Icon name="edit"/> Edit text</button><button type="button" onClick={() => { setTagPost(post); setTagText(""); setDialogError(""); }} disabled={!workspaceReady}><Icon name="tag"/> Add tag</button><button type="button" onClick={() => doDelete(post)} disabled={!workspaceReady}><Icon name="delete"/> Delete</button></div>
           </article>)}</div>
         </section>
         {status && <p className={styles.statusMessage} role="status">{status}</p>}
@@ -351,7 +344,7 @@ export default function BrowserMedNotes() {
         </section>
       </div>}
 
-      {trashOpen && <div className={styles.overlay} onMouseDown={event => { if (event.target === event.currentTarget) setTrashOpen(false); }}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="trash-title"><div className={styles.dialogHeading}><div><h2 id="trash-title">Trash</h2><p>Restore a post or delete it forever.</p></div><button type="button" onClick={() => setTrashOpen(false)}>Esc</button></div><div className={styles.trashList}>{trash.length === 0 && <p className={styles.empty}>Trash is empty.</p>}{trash.map(post => <article className={styles.trashPost} key={post.id}><span className={styles.postMeta}>{post.deletedAt ? `Deleted ${dateLabel(post.deletedAt)}` : dateLabel(post.createdAt)}</span><pre className={styles.postText}>{post.text}</pre><div className={styles.postActions}><button type="button" onClick={async () => { try { await restorePost(post.id); await refresh(); } catch (error) { setStatus(`Could not restore: ${(error as Error).message}`); } }}>Restore</button><button type="button" onClick={async () => { if (!window.confirm("Delete this post forever? This cannot be undone.")) return; try { await deleteForever(post.id); await refresh(); } catch (error) { setStatus(`Could not delete post: ${(error as Error).message}`); } }}>Delete forever</button></div></article>)}</div><div className={styles.editorActions}><button type="button" disabled={!trash.length} onClick={async () => { if (!window.confirm("Permanently delete every post in Trash? This cannot be undone.")) return; try { await emptyTrash(); await refresh(); } catch (error) { setStatus(`Could not empty Trash: ${(error as Error).message}`); } }}>Empty Trash</button></div></section></div>}
+      {trashOpen && <div className={styles.overlay} onMouseDown={event => { if (event.target === event.currentTarget) setTrashOpen(false); }}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="trash-title"><div className={styles.dialogHeading}><div><h2 id="trash-title">Trash</h2><p>Restore a post or delete it forever.</p></div><button type="button" onClick={() => setTrashOpen(false)}>Esc</button></div><div className={styles.trashList}>{trash.length === 0 && <p className={styles.empty}>Trash is empty.</p>}{trash.map(post => <article className={styles.trashPost} key={post.id}><span className={styles.postMeta}>{post.deletedAt ? `Deleted ${dateLabel(post.deletedAt)}` : dateLabel(post.createdAt)}</span><pre className={styles.postText}>{post.text}</pre><div className={styles.postActions}><button type="button" disabled={!workspaceReady} onClick={async () => { try { await restorePost(post.id); await refresh(); } catch (error) { setStatus(`Could not restore: ${(error as Error).message}`); } }}>Restore</button><button type="button" disabled={!workspaceReady} onClick={async () => { if (!window.confirm("Delete this post forever? This cannot be undone.")) return; try { await deleteForever(post.id); await refresh(); } catch (error) { setStatus(`Could not delete post: ${(error as Error).message}`); } }}>Delete forever</button></div></article>)}</div><div className={styles.editorActions}><button type="button" disabled={!trash.length || !workspaceReady} onClick={async () => { if (!window.confirm("Permanently delete every post in Trash? This cannot be undone.")) return; try { await emptyTrash(); await refresh(); } catch (error) { setStatus(`Could not empty Trash: ${(error as Error).message}`); } }}>Empty Trash</button></div></section></div>}
 
       {(editorPost || tagPost) && <div className={styles.overlay}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="edit-title"><div className={styles.dialogHeading}><h2 id="edit-title">{editorPost ? "Edit post" : "Add a tag"}</h2><button type="button" onClick={() => { if (!busy) { setEditorPost(null); setTagPost(null); } }}>✕</button></div>{editorPost ? <form onSubmit={saveEdit}><label className={styles.label} htmlFor="edit-text">Post text</label><textarea id="edit-text" className={styles.editorText} value={editText} onChange={event => setEditText(event.target.value)} required/><p className={styles.dialogStatus} role="status">{dialogError}</p><div className={styles.editorActions}><button type="button" onClick={() => setEditorPost(null)} disabled={busy}>Cancel</button><button className={styles.saveButton} type="submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></div></form> : <form onSubmit={saveTag}><label className={styles.label} htmlFor="edit-tag">Tag name</label><input id="edit-tag" value={tagText} onChange={event => setTagText(event.target.value)} maxLength={100} required/><p className={styles.dialogStatus} role="status">{dialogError}</p><div className={styles.editorActions}><button type="button" onClick={() => setTagPost(null)} disabled={busy}>Cancel</button><button className={styles.saveButton} type="submit" disabled={busy}>{busy ? "Saving…" : "Add tag"}</button></div></form>}</section></div>}
     </div>

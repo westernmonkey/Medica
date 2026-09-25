@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useParams } from "next/navigation";
 import { BlockMath, InlineMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import type { PublicMatch } from "@/lib/1v1/types";
+import { SafeHtml, SafeImage } from "@/components/SafeHtml";
 
 function BankHtml({ html }: { html: string | null }) {
   if (!html) {
@@ -31,24 +32,29 @@ function BankHtml({ html }: { html: string | null }) {
         if (part.startsWith("$") && part.endsWith("$")) {
           return <InlineMath key={i}>{part.slice(1, -1)}</InlineMath>;
         }
-        return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
+        return <SafeHtml key={i} html={part} />;
       })}
     </div>
   );
 }
+
+const subscribeToSessionStorage = () => () => {};
 
 export default function DuelMatchPage() {
   const params = useParams<{ code: string }>();
   const code = String(params.code ?? "").toUpperCase();
   const [match, setMatch] = useState<PublicMatch | null>(null);
   const [error, setError] = useState("");
-  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [answerError, setAnswerError] = useState("");
+  const [answering, setAnswering] = useState(false);
+  const [connection, setConnection] = useState("Connecting…");
+  const playerId = useSyncExternalStore(
+    subscribeToSessionStorage,
+    () => window.sessionStorage.getItem(`1v1:${code}:playerId`),
+    () => null,
+  );
   const [takeover, setTakeover] = useState(false);
   const prevOrder = useRef<string[]>([]);
-
-  useEffect(() => {
-    setPlayerId(sessionStorage.getItem(`1v1:${code}:playerId`));
-  }, [code]);
 
   useEffect(() => {
     if (!match || !playerId) {
@@ -73,55 +79,107 @@ export default function DuelMatchPage() {
       return;
     }
 
-    fetch(`/api/1v1/${code}`)
-      .then((res) => res.json().then((data) => ({ res, data })))
-      .then(({ res, data }) => {
-        if (!res.ok) {
-          setError(data.error);
-          return;
-        }
-        setMatch(data.match);
-      });
+    let stopped = false;
+    let socket: WebSocket | null = null;
+    let retryTimer = 0;
+    let retryDelay = 500;
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const socket = new WebSocket(`${protocol}//${window.location.hostname}:3002`);
-
-    socket.addEventListener("open", () => {
-      socket.send(JSON.stringify({ type: "watch", code }));
-    });
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data) as { match?: PublicMatch };
-      if (data.match) {
-        setMatch(data.match);
+    const loadSnapshot = async () => {
+      try {
+        const response = await fetch(`/api/1v1/${code}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Could not load this match.");
+        setMatch((current) => !current || data.match.revision >= current.revision ? data.match : current);
         setError("");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not load this match.");
       }
-    });
+    };
 
-    socket.addEventListener("error", () => {
-      setError("WebSocket failed. Create or join a match first so the server starts.");
-    });
+    void loadSnapshot();
 
+    const connect = () => {
+      if (stopped) return;
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      socket = new WebSocket(`${protocol}//${window.location.host}/api/1v1/ws?code=${encodeURIComponent(code)}`);
+      socket.addEventListener("open", () => {
+        retryDelay = 500;
+        setConnection("Live");
+      });
+      socket.addEventListener("message", (event) => {
+        try {
+          const data = JSON.parse(String(event.data)) as { match?: PublicMatch; error?: string };
+          if (data.error) setError(data.error);
+          if (data.match) {
+            setMatch((current) => !current || data.match!.revision >= current.revision ? data.match! : current);
+            setError("");
+            setAnswerError("");
+          }
+        } catch {
+          setConnection("Reconnecting…");
+        }
+      });
+      socket.addEventListener("close", () => {
+        if (stopped) return;
+        setConnection("Reconnecting…");
+        retryTimer = window.setTimeout(connect, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 10000);
+      });
+      socket.addEventListener("error", () => socket?.close());
+    };
+
+    connect();
     return () => {
-      socket.close();
+      stopped = true;
+      window.clearTimeout(retryTimer);
+      socket?.close();
     };
   }, [code]);
+
+  const matchRevision = match?.revision ?? null;
+  const correctOptionId = match?.correctOptionId ?? null;
+  useEffect(() => {
+    if (matchRevision === null || correctOptionId === null) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/1v1/${code}`);
+        const data = await response.json();
+        if (response.ok) setMatch((current) => data.match.revision >= (current?.revision ?? -1) ? data.match : current);
+      } catch {
+        setConnection("Reconnecting…");
+      }
+    }, 3200);
+    return () => window.clearTimeout(timer);
+  }, [code, matchRevision, correctOptionId]);
 
   async function answer(optionId: string) {
     if (!playerId) {
       return;
     }
-    const res = await fetch(`/api/1v1/${code}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "answer", playerId, optionId }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
-      return;
+    setAnswering(true);
+    setAnswerError("");
+    try {
+      const res = await fetch(`/api/1v1/${code}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "answer", playerId, optionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAnswerError(data.error ?? "That answer could not be submitted.");
+        if (res.status === 409) {
+          const snapshot = await fetch(`/api/1v1/${code}`);
+          const current = await snapshot.json();
+          if (snapshot.ok) setMatch((previous) => current.match.revision >= (previous?.revision ?? -1) ? current.match : previous);
+        }
+        return;
+      }
+      setMatch(data.match);
+    } catch {
+      setAnswerError("Could not submit your answer. Check your connection and retry.");
+    } finally {
+      setAnswering(false);
     }
-    setMatch(data.match);
   }
 
   if (error) {
@@ -180,28 +238,25 @@ export default function DuelMatchPage() {
         <span>
           Q {match.currentIndex + 1} / {match.total}
         </span>
+        <span aria-live="polite" className="text-sm text-muted-foreground">{connection}</span>
         <span>
           {match.players.map((p) => `${p.name} ${p.score}`).join(" · ")}
         </span>
       </div>
       <div className="mb-6 text-xl">
         <BankHtml html={q.text} />
-        {q.image ? (
-          <img src={q.image} alt="" className="mt-3 max-h-48 max-w-full" />
-        ) : null}
+        <SafeImage src={q.image} className="mt-3 max-h-48 max-w-full" />
       </div>
       <div className="flex flex-col gap-3">
         {q.options.map((opt) => (
           <button
             key={opt.id}
             className="border px-4 py-3 text-left disabled:opacity-50"
-            disabled={!playerId || already || !me || roundOver}
+            disabled={!playerId || already || !me || roundOver || answering}
             onClick={() => answer(opt.id)}
           >
             <BankHtml html={opt.text} />
-            {opt.image ? (
-              <img src={opt.image} alt="" className="mt-2 max-h-32 max-w-full" />
-            ) : null}
+            <SafeImage src={opt.image} className="mt-2 max-h-32 max-w-full" />
           </button>
         ))}
       </div>
@@ -230,6 +285,7 @@ export default function DuelMatchPage() {
           </ol>
         </div>
       ) : null}
+      {answerError ? <p role="status" className="mt-4 text-amber-700">{answerError}</p> : null}
       {!playerId ? (
         <p className="mt-4 text-red-600">Join from the 1v1 page first.</p>
       ) : null}

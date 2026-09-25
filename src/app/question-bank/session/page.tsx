@@ -1,92 +1,42 @@
-export const dynamic = 'force-dynamic';
+import QuizClient from "./quiz-client";
+import { getQuestionsForChapters } from "@/lib/question-bank/data";
+import type { QuizQuestion } from "@/lib/question-bank/data";
+import "katex/dist/katex.min.css";
 
-import fs from 'fs';
-import path from 'path';
-import { shuffle } from '@/lib/utils';
-import QuizClient from './quiz-client';
-import 'katex/dist/katex.min.css';
+export const dynamic = "force-dynamic";
+export type QuestionData = QuizQuestion;
 
-export interface QuestionData {
-  _id: string;
-  question: {
-    text: string | null;
-    image: string | null;
-  };
-  options: {
-    id: string;
-    text: string | null;
-    isCorrect: boolean;
-    image: string | null;
-  }[];
-  solution: {
-    text: string | null;
-    image: string | null;
-  };
+function decode(value: string | string[] | undefined): string[] {
+  const values = Array.isArray(value) ? value : value ? [value] : [];
+  return values.map((item) => {
+    try { return decodeURIComponent(item); } catch { return ""; }
+  }).filter(Boolean);
 }
 
-// This Server Component reads all the question files
 export default async function QuizPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
+  const params = await searchParams;
+  const [exam] = decode(params.exam);
+  const [subject] = decode(params.subject);
+  const [type] = decode(params.type);
+  const [rawCount] = decode(params.num);
+  const chapters = decode(params.chapters);
+  const requestedCount = Number.parseInt(rawCount ?? "20", 10);
 
-  const exam = decodeURIComponent(resolvedSearchParams.exam as string);
-  const subject = decodeURIComponent(resolvedSearchParams.subject as string);
-  const type = decodeURIComponent(resolvedSearchParams.type as string);
-  const numQuestions = parseInt(resolvedSearchParams.num as string) || 20;
-  
-  // Handle chapters, which can be a single string or an array
-  let chapterNames: string[] = [];
-  if (Array.isArray(resolvedSearchParams.chapters)) {
-    chapterNames = resolvedSearchParams.chapters.map(ch => decodeURIComponent(ch));
-  } else if (typeof resolvedSearchParams.chapters === 'string') {
-    chapterNames = [decodeURIComponent(resolvedSearchParams.chapters)];
+  if (!exam || !subject || !type || !chapters.length) {
+    return <main className="p-8">Choose an exam, subject, type and at least one chapter.</main>;
   }
 
-  if (!exam || !subject || !type || chapterNames.length === 0) {
-    return <div>Error: Missing quiz parameters.</div>;
-  }
-
-  const allQuestions: QuestionData[] = [];
-  const bankPath = path.join(process.cwd(), 'public', 'bank');
-
+  let questions: QuizQuestion[] | null = null;
   try {
-    // Loop through each selected chapter folder
-    for (const chapter of chapterNames) {
-      const chapterPath = path.join(
-        bankPath,
-        exam, // e.g., 'neetug'
-        subject, // e.g., 'Physics'
-        type, // e.g., 'NTA Abhyaas'
-        chapter // e.g., 'Current Electricity'
-      );
-
-      const questionFiles = fs.readdirSync(chapterPath)
-                               .filter(file => file.endsWith('.json'));
-
-      // Read every question file in the folder
-      for (const file of questionFiles) {
-        const filePath = path.join(chapterPath, file);
-        const fileContent = fs.readFileSync(filePath, 'utf-8');
-        const json = JSON.parse(fileContent);
-        
-        // Add the 'data' part to our question list
-        if (json.success && json.data) {
-          allQuestions.push(json.data);
-        }
-      }
-    }
+    questions = getQuestionsForChapters({ exam, subject, type, chapters }, requestedCount);
   } catch (error) {
-    console.error('Failed to read question files:', error);
-    return <div>Error loading questions. Please check folder paths.</div>;
+    console.error("Could not load quiz data", error instanceof Error ? error.message : "unknown error");
   }
-
-  // We have all questions, now let's shuffle and slice
-  const shuffledQuestions = shuffle(allQuestions);
-  const quizQuestions = shuffledQuestions.slice(0, numQuestions);
-
-  // Pass the final list of questions to the Client Component
-  return <QuizClient questions={quizQuestions} />;
+  if (!questions) return <main className="p-8">Quiz data is unavailable. Please try again later.</main>;
+  if (!questions.length) return <main className="p-8">No questions were found for that selection.</main>;
+  return <QuizClient questions={questions} />;
 }

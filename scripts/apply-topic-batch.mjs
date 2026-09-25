@@ -8,7 +8,7 @@ if (!batchFile) {
 }
 
 const topics = JSON.parse(fs.readFileSync(batchFile, "utf8"));
-const bankRoot = fs.realpathSync(path.resolve("public/bank"));
+const bankRoot = fs.realpathSync(path.resolve("data/question-bank/source"));
 assert(topics && !Array.isArray(topics) && typeof topics === "object", "Invalid batch");
 const edits = [];
 

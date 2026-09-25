@@ -61,7 +61,17 @@ async function testBrowser(config) {
     await page.getByRole("textbox", { name: "Post text" }).waitFor();
     assert.equal(await page.getByRole("button", { name: /Search/ }).count(), 1);
     await page.getByRole("button", { name: "Choose notes folder" }).click();
-    await page.locator("article[data-post-id]").waitFor({ state: "detached" });
+    await page.evaluate(async () => {
+      const fsRoot = await navigator.storage.getDirectory();
+      const notes = await fsRoot.getDirectoryHandle("MedNotes-E2E-mednotes-posts");
+      const oldRecovery = await notes.getDirectoryHandle("recovery", { create: true });
+      const legacyPost = await oldRecovery.getDirectoryHandle("2025-01-01T00-00-00-000Z_abcd", { create: true });
+      const file = await legacyPost.getFileHandle("text.md", { create: true });
+      const writer = await file.createWritable();
+      await writer.write("legacy recovery copy");
+      await writer.close();
+    });
+    await page.getByRole("button", { name: "Choose recovery folder" }).click();
     await page.getByRole("button", { name: "Save", exact: true }).waitFor({ state: "visible" });
 
     await page.getByRole("textbox", { name: "Post text" }).fill("A student had a productive day after completing a difficult assignment.");
@@ -75,12 +85,37 @@ async function testBrowser(config) {
     await page.locator('article[data-post-id]').filter({ hasText: "A student had a productive day" }).waitFor();
     console.log(`${config.name} files before reload: ${JSON.stringify(await page.evaluate(async () => {
       const root = await navigator.storage.getDirectory();
-      const appRoot = await root.getDirectoryHandle("MedNotes-E2E-mednotes-posts");
-      const active = await appRoot.getDirectoryHandle("active");
+      const notes = await root.getDirectoryHandle("MedNotes-E2E-mednotes-posts");
+      const active = await notes.getDirectoryHandle("active");
+      const recovery = await root.getDirectoryHandle("MedNotes-E2E-mednotes-backups");
       const names = [];
+      const recoveryNames = [];
       for await (const [name, entry] of active.entries()) if (entry.kind === "directory") names.push(name);
-      return { names, cards: document.querySelectorAll("article[data-post-id]").length, status: document.querySelector('[role="status"]')?.textContent };
+      for await (const [name, entry] of recovery.entries()) if (entry.kind === "directory") recoveryNames.push(name);
+      let legacyText = "";
+      try { legacyText = await (await (await (await recovery.getDirectoryHandle("2025-01-01T00-00-00-000Z_abcd")).getFileHandle("text.md")).getFile()).text(); } catch {}
+      let nestedRecovery = false;
+      try { await notes.getDirectoryHandle("recovery"); nestedRecovery = true; } catch {}
+      return { names, recoveryNames, legacyText, nestedRecovery, cards: document.querySelectorAll("article[data-post-id]").length, status: document.querySelector('[role="status"]')?.textContent };
     }))}`);
+    const layout = await page.evaluate(async () => {
+      const root = await navigator.storage.getDirectory();
+      const notes = await root.getDirectoryHandle("MedNotes-E2E-mednotes-posts");
+      const recovery = await root.getDirectoryHandle("MedNotes-E2E-mednotes-backups");
+      const active = await notes.getDirectoryHandle("active");
+      const activeNames = [];
+      const recoveryNames = [];
+      for await (const [name, entry] of active.entries()) if (entry.kind === "directory") activeNames.push(name);
+      for await (const [name, entry] of recovery.entries()) if (entry.kind === "directory") recoveryNames.push(name);
+      let legacyText = "";
+      try { legacyText = await (await (await (await recovery.getDirectoryHandle("2025-01-01T00-00-00-000Z_abcd")).getFileHandle("text.md")).getFile()).text(); } catch {}
+      let nestedRecovery = false;
+      try { await notes.getDirectoryHandle("recovery"); nestedRecovery = true; } catch {}
+      return { activeNames, recoveryNames, legacyText, nestedRecovery };
+    });
+    assert.equal(layout.nestedRecovery, false, `${config.name}: recovery must not remain inside the notes folder`);
+    assert.equal(layout.legacyText, "legacy recovery copy", `${config.name}: old recovery files must be preserved in the separate folder`);
+    assert.ok(layout.activeNames.some(id => layout.recoveryNames.includes(id)), `${config.name}: saved post must have a separate recovery copy`);
     await page.reload();
     await page.waitForTimeout(1000);
     console.log(`${config.name} reload check: ${await page.locator("main").last().innerText()}`);
@@ -106,8 +141,8 @@ async function testBrowser(config) {
     await page.locator('article[data-post-id]').filter({ hasText: "A student had a productive day" }).waitFor();
     await page.getByRole("dialog", { name: "Trash" }).getByRole("button", { name: "Esc" }).click();
 
-    await page.getByRole("button", { name: "Choose backup folder & back up" }).click();
-    await page.getByRole("status").filter({ hasText: /Backup saved in your backup folder:/ }).waitFor();
+    await page.getByRole("button", { name: "Create ZIP backup" }).click();
+    await page.getByRole("status").filter({ hasText: /ZIP backup saved in your recovery folder:/ }).waitFor();
     const backupCheck = await page.evaluate(async () => {
       const root = await navigator.storage.getDirectory();
       const folder = await root.getDirectoryHandle("MedNotes-E2E-mednotes-backups");
@@ -118,7 +153,7 @@ async function testBrowser(config) {
       }
       return null;
     });
-    assert.ok(backupCheck?.validZip, `${config.name}: ZIP backup must be written in the selected backup folder`);
+    assert.ok(backupCheck?.validZip, `${config.name}: ZIP backup must be written in the separate recovery folder`);
 
     await page.setViewportSize({ width: 395, height: 800 });
     const overflow = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, offenders: [...document.querySelectorAll("body *")].filter(element => element.getBoundingClientRect().right > innerWidth + 1).slice(0, 8).map(element => ({ tag: element.tagName, className: typeof element.className === "string" ? element.className : "", right: Math.round(element.getBoundingClientRect().right) })) }));

@@ -12,23 +12,24 @@ export type Post = {
 };
 
 export type StoreState = "folder-required" | "permission-required" | "unsupported" | "ready";
-export type BackupState = "folder-required" | "permission-required" | "ready";
+export type RecoveryState = "folder-required" | "permission-required" | "separate-folder-required" | "ready";
 type PostPayload = { text: string; vector: Float32Array; image?: Blob | null; voice?: Blob | null };
 type DirectoryHandle = FileSystemDirectoryHandle & {
   queryPermission(options?: { mode?: "readwrite" }): Promise<PermissionState>;
   requestPermission(options?: { mode?: "readwrite" }): Promise<PermissionState>;
   entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
 };
-type Roots = { root: DirectoryHandle; active: DirectoryHandle; trash: DirectoryHandle; recovery: DirectoryHandle };
+type Roots = { root: DirectoryHandle; active: DirectoryHandle; trash: DirectoryHandle };
 
 const ID_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z_[a-f0-9]{4}$/;
 const STORE_NAME = "mednotes-browser";
 const STORE_VERSION = 2;
 let roots: Roots | null = null;
-let backupDirectory: DirectoryHandle | null = null;
+let recoveryDirectory: DirectoryHandle | null = null;
 let state: StoreState = "folder-required";
-let backupState: BackupState = "folder-required";
+let recoveryState: RecoveryState = "folder-required";
 let backend: "folder" | null = null;
+let recoverySyncQueue = Promise.resolve();
 
 function isDirectoryPickerAvailable() {
   return typeof window !== "undefined" && typeof (window as Window & { showDirectoryPicker?: unknown }).showDirectoryPicker === "function";
@@ -71,8 +72,80 @@ async function childDirectory(root: DirectoryHandle, name: string, create = fals
 async function ensureRoots(root: DirectoryHandle): Promise<Roots> {
   const active = await childDirectory(root, "active", true);
   const trash = await childDirectory(root, ".trash", true);
-  const recovery = await childDirectory(root, "recovery", true);
-  return { root, active, trash, recovery };
+  return { root, active, trash };
+}
+
+async function sameDirectory(first: DirectoryHandle, second: DirectoryHandle) {
+  return first.isSameEntry(second);
+}
+
+async function conflictsWithNotes(notes: Roots, recovery: DirectoryHandle) {
+  for (const notesDirectory of [notes.root, notes.active, notes.trash]) {
+    if (await sameDirectory(notesDirectory, recovery)) return true;
+  }
+  const oldRecovery = await childDirectory(notes.root, "recovery").catch(error => {
+    if ((error as DOMException).name === "NotFoundError") return null;
+    throw error;
+  });
+  return Boolean(oldRecovery && await sameDirectory(oldRecovery, recovery));
+}
+
+async function ensureSeparateRecovery(notes: Roots, recovery: DirectoryHandle) {
+  if (await conflictsWithNotes(notes, recovery)) throw new Error("Choose a separate folder outside the notes folder for recovery copies.");
+}
+
+async function syncRecovery(notes: Roots, recovery: DirectoryHandle) {
+  for (const source of [notes.active, notes.trash]) {
+    for (const [id, sourcePost] of await listDirectories(source)) {
+      if (!ID_PATTERN.test(id)) continue;
+      await removeDirectory(recovery, id);
+      await copyDirectory(sourcePost, recovery, id);
+    }
+  }
+}
+
+async function hasNestedRecovery(notes: Roots) {
+  return childDirectory(notes.root, "recovery").then(() => true).catch(error => {
+    if ((error as DOMException).name === "NotFoundError") return false;
+    throw error;
+  });
+}
+
+async function removeNestedRecoveryAfterSync(notes: Roots, recovery: DirectoryHandle) {
+  const oldRecovery = await childDirectory(notes.root, "recovery").catch(error => {
+    if ((error as DOMException).name === "NotFoundError") return null;
+    throw error;
+  });
+  if (!oldRecovery || await sameDirectory(oldRecovery, recovery)) return;
+  for (const [id, oldPost] of await listDirectories(oldRecovery)) {
+    if (!ID_PATTERN.test(id)) continue;
+    const alreadyCopied = await childDirectory(recovery, id).catch(error => {
+      if ((error as DOMException).name === "NotFoundError") return null;
+      throw error;
+    });
+    if (!alreadyCopied) await copyDirectory(oldPost, recovery, id);
+    await removeDirectory(oldRecovery, id);
+  }
+  const remaining = [];
+  for await (const [name] of oldRecovery.entries()) remaining.push(name);
+  if (!remaining.length) await removeDirectory(notes.root, "recovery");
+}
+
+function synchronizeRecovery(notes: Roots, recovery: DirectoryHandle) {
+  const operation = recoverySyncQueue.then(async () => {
+    await syncRecovery(notes, recovery);
+    await removeNestedRecoveryAfterSync(notes, recovery);
+  }, async () => {
+    await syncRecovery(notes, recovery);
+    await removeNestedRecoveryAfterSync(notes, recovery);
+  });
+  recoverySyncQueue = operation.then(() => undefined, () => undefined);
+  return operation;
+}
+
+function currentRecovery(): DirectoryHandle {
+  if (!recoveryDirectory || recoveryState !== "ready") throw new Error("Choose a separate recovery folder before changing posts.");
+  return recoveryDirectory;
 }
 
 async function permission(handle: DirectoryHandle, request: boolean) {
@@ -83,14 +156,14 @@ async function permission(handle: DirectoryHandle, request: boolean) {
   return request && await handle.requestPermission(options) === "granted";
 }
 
-export async function initializeStore(): Promise<{ state: StoreState; backupState: BackupState; backend: "folder" | null; notesFolderName: string; backupFolderName: string }> {
+export async function initializeStore(syncSelectedNotes = false): Promise<{ state: StoreState; recoveryState: RecoveryState; backend: "folder" | null; notesFolderName: string; recoveryFolderName: string }> {
   backend = null;
   roots = null;
-  backupDirectory = null;
+  recoveryDirectory = null;
   if (!isDirectoryPickerAvailable()) {
     state = "unsupported";
-    backupState = "folder-required";
-    return { state, backupState, backend, notesFolderName: "", backupFolderName: "" };
+    recoveryState = "folder-required";
+    return { state, recoveryState, backend, notesFolderName: "", recoveryFolderName: "" };
   }
 
   backend = "folder";
@@ -101,13 +174,21 @@ export async function initializeStore(): Promise<{ state: StoreState; backupStat
     state = "ready";
   } else state = "permission-required";
 
-  const backup = await storedHandle("backup");
-  if (!backup) backupState = "folder-required";
-  else if (await permission(backup, false)) {
-    backupDirectory = backup;
-    backupState = "ready";
-  } else backupState = "permission-required";
-  return { state, backupState, backend, notesFolderName: roots?.root.name || "", backupFolderName: backupDirectory?.name || "" };
+  const recovery = await storedHandle("backup");
+  if (!recovery) recoveryState = "folder-required";
+  else if (await permission(recovery, false)) {
+    if (!roots) {
+      recoveryDirectory = recovery;
+      recoveryState = "ready";
+    } else if (await conflictsWithNotes(roots, recovery)) {
+      recoveryState = "separate-folder-required";
+    } else {
+      recoveryDirectory = recovery;
+      recoveryState = "ready";
+      if (syncSelectedNotes || await hasNestedRecovery(roots)) await synchronizeRecovery(roots, recovery);
+    }
+  } else recoveryState = "permission-required";
+  return { state, recoveryState, backend, notesFolderName: roots?.root.name || "", recoveryFolderName: recoveryDirectory?.name || "" };
 }
 
 export async function connectFolder() {
@@ -123,18 +204,21 @@ export async function connectFolder() {
   let migrationError = "";
   try { migratedPosts = await copyLegacyBrowserPosts(roots); }
   catch (error) { migrationError = (error as Error).message; }
-  return { ...await initializeStore(), migratedPosts, migrationError };
+  return { ...await initializeStore(true), migratedPosts, migrationError };
 }
 
-export async function connectBackupFolder() {
+export async function connectRecoveryFolder() {
   const picker = (window as Window & { showDirectoryPicker?: (options?: { id?: string; mode?: "readwrite" }) => Promise<DirectoryHandle> }).showDirectoryPicker;
   if (!picker) throw new Error("Folder access is unavailable in this browser.");
   const handle = await picker({ id: "mednotes-backups", mode: "readwrite" });
-  if (!await permission(handle, true)) throw new Error("MedNotes needs permission to use the backup folder.");
+  if (!await permission(handle, true)) throw new Error("MedNotes needs permission to use the recovery folder.");
+  const notes = currentRoots();
+  await ensureSeparateRecovery(notes, handle);
+  await synchronizeRecovery(notes, handle);
   await saveHandle("backup", handle);
-  backupDirectory = handle;
-  backupState = "ready";
-  return { backupState, backupFolderName: handle.name };
+  recoveryDirectory = handle;
+  recoveryState = "ready";
+  return { recoveryState, recoveryFolderName: handle.name };
 }
 
 export async function reconnectFolder() {
@@ -144,16 +228,19 @@ export async function reconnectFolder() {
   await saveHandle("root", handle);
   roots = await ensureRoots(handle);
   state = "ready";
-  return initializeStore();
+  return initializeStore(true);
 }
 
-export async function reconnectBackupFolder() {
+export async function reconnectRecoveryFolder() {
   const handle = await storedHandle("backup");
-  if (!handle) return connectBackupFolder();
-  if (!await permission(handle, true)) throw new Error("Backup-folder permission was not granted.");
-  backupDirectory = handle;
-  backupState = "ready";
-  return { backupState, backupFolderName: handle.name };
+  if (!handle) return connectRecoveryFolder();
+  if (!await permission(handle, true)) throw new Error("Recovery-folder permission was not granted.");
+  const notes = currentRoots();
+  await ensureSeparateRecovery(notes, handle);
+  await synchronizeRecovery(notes, handle);
+  recoveryDirectory = handle;
+  recoveryState = "ready";
+  return { recoveryState, recoveryFolderName: handle.name };
 }
 
 function currentRoots(): Roots {
@@ -263,11 +350,11 @@ async function copyLegacyBrowserPosts(destination: Roots) {
   }
 
   let copied = 0;
-  for (const area of ["active", ".trash", "recovery"] as const) {
+  for (const area of ["active", ".trash"] as const) {
     let sourceArea: DirectoryHandle;
     try { sourceArea = await childDirectory(legacyRoot, area); }
     catch (error) { if ((error as DOMException).name === "NotFoundError") continue; throw error; }
-    const targetArea = area === "active" ? destination.active : area === ".trash" ? destination.trash : destination.recovery;
+    const targetArea = area === "active" ? destination.active : destination.trash;
     for (const [id, sourcePost] of await listDirectories(sourceArea)) {
       if (!ID_PATTERN.test(id)) continue;
       const existing = await childDirectory(targetArea, id).catch(error => {
@@ -295,13 +382,14 @@ async function writePost(parent: DirectoryHandle, id: string, payload: PostPaylo
 
 export async function savePost(payload: PostPayload) {
   const store = currentRoots();
+  const recovery = currentRecovery();
   const id = new Date().toISOString().replace(/[:.]/g, "-") + "_" + crypto.getRandomValues(new Uint16Array(1))[0].toString(16).padStart(4, "0").slice(-4);
   try {
     await writePost(store.active, id, payload);
-    await copyDirectory(await childDirectory(store.active, id), store.recovery, id);
+    await copyDirectory(await childDirectory(store.active, id), recovery, id);
   } catch (error) {
     await removeDirectory(store.active, id);
-    await removeDirectory(store.recovery, id);
+    await removeDirectory(recovery, id);
     throw error;
   }
   const posts = await readPosts();
@@ -311,17 +399,18 @@ export async function savePost(payload: PostPayload) {
 export async function editPost(id: string, payload: PostPayload) {
   if (!ID_PATTERN.test(id)) throw new Error("Invalid post ID.");
   const store = currentRoots();
+  const recovery = currentRecovery();
   const old = await readPost(await childDirectory(store.active, id), id, false);
   if (!old) throw new Error("Post not found.");
   const tags = old.tags;
   try {
     await writePost(store.active, id, payload, tags);
-    await removeDirectory(store.recovery, id);
-    await copyDirectory(await childDirectory(store.active, id), store.recovery, id);
+    await removeDirectory(recovery, id);
+    await copyDirectory(await childDirectory(store.active, id), recovery, id);
   } catch (error) {
     await writePost(store.active, id, { text: old.text, vector: old.vector, image: old.image, voice: old.voice }, tags);
-    await removeDirectory(store.recovery, id);
-    await copyDirectory(await childDirectory(store.active, id), store.recovery, id);
+    await removeDirectory(recovery, id);
+    await copyDirectory(await childDirectory(store.active, id), recovery, id);
     throw error;
   }
 }
@@ -331,17 +420,18 @@ export async function addTag(id: string, tag: string) {
   const cleaned = tag.trim();
   if (!cleaned || cleaned.length > 100) throw new Error("Enter a tag under 100 characters.");
   const store = currentRoots();
+  const recovery = currentRecovery();
   const post = await readPost(await childDirectory(store.active, id), id, false);
   if (!post) throw new Error("Post not found.");
   const tags = post.tags.some(item => item.toLowerCase() === cleaned.toLowerCase()) ? post.tags : [...post.tags, cleaned];
   const bytes = new TextEncoder().encode(JSON.stringify(tags));
   const previous = new TextEncoder().encode(JSON.stringify(post.tags));
   try {
-    await writeBytes(await childDirectory(store.recovery, id, true), "tags.json", bytes);
+    await writeBytes(await childDirectory(recovery, id, true), "tags.json", bytes);
     await writeBytes(await childDirectory(store.active, id), "tags.json", bytes);
   } catch (error) {
     await writeBytes(await childDirectory(store.active, id, true), "tags.json", previous).catch(() => undefined);
-    await writeBytes(await childDirectory(store.recovery, id, true), "tags.json", previous).catch(() => undefined);
+    await writeBytes(await childDirectory(recovery, id, true), "tags.json", previous).catch(() => undefined);
     throw error;
   }
   return tags;
@@ -350,6 +440,7 @@ export async function addTag(id: string, tag: string) {
 export async function moveToTrash(id: string) {
   if (!ID_PATTERN.test(id)) throw new Error("Invalid post ID.");
   const store = currentRoots();
+  currentRecovery();
   await copyDirectory(await childDirectory(store.active, id), store.trash, id);
   try {
     await writeBytes(await childDirectory(store.trash, id), "deleted.json", new TextEncoder().encode(JSON.stringify({ deletedAt: new Date().toISOString() })));
@@ -363,6 +454,7 @@ export async function moveToTrash(id: string) {
 export async function restorePost(id: string) {
   if (!ID_PATTERN.test(id)) throw new Error("Invalid post ID.");
   const store = currentRoots();
+  const recovery = currentRecovery();
   const trashed = await childDirectory(store.trash, id);
   const active = await childDirectory(store.active, id).catch(() => null);
   if (active) throw new Error("An active post already exists with this ID.");
@@ -371,8 +463,8 @@ export async function restorePost(id: string) {
   try {
   await copyDirectory(trashed, store.active, id);
     await removeDirectory(store.trash, id);
-    await removeDirectory(store.recovery, id);
-    await copyDirectory(await childDirectory(store.active, id), store.recovery, id);
+    await removeDirectory(recovery, id);
+    await copyDirectory(await childDirectory(store.active, id), recovery, id);
   } catch (error) {
     await removeDirectory(store.active, id);
     await copyDirectory(trashed, store.trash, id);
@@ -384,12 +476,14 @@ export async function restorePost(id: string) {
 export async function deleteForever(id: string) {
   if (!ID_PATTERN.test(id)) throw new Error("Invalid post ID.");
   const store = currentRoots();
+  const recovery = currentRecovery();
   await childDirectory(store.trash, id);
   await removeDirectory(store.trash, id);
-  await removeDirectory(store.recovery, id);
+  await removeDirectory(recovery, id);
 }
 
 export async function emptyTrash() {
+  currentRecovery();
   const ids = (await listDirectories(currentRoots().trash)).map(([id]) => id).filter(id => ID_PATTERN.test(id));
   for (const id of ids) await deleteForever(id);
   return ids.length;
@@ -397,7 +491,7 @@ export async function emptyTrash() {
 
 export async function exportBackup() {
   const store = currentRoots();
-  if (!backupDirectory || backupState !== "ready") throw new Error("Choose a backup folder before creating a backup.");
+  const recovery = currentRecovery();
   const files: Record<string, Uint8Array> = {
     "manifest.json": new TextEncoder().encode(JSON.stringify({ format: "mednotes-backup", version: 1, createdAt: new Date().toISOString() })),
   };
@@ -416,7 +510,7 @@ export async function exportBackup() {
   }
   const archive = zipSync(files, { level: 1 });
   const filename = `MedNotes-backup-${new Date().toISOString().replace(/[:.]/g, "-")}.zip`;
-  await writeBytes(backupDirectory, filename, archive);
+  await writeBytes(recovery, filename, archive);
   return filename;
 }
 
@@ -426,6 +520,7 @@ export async function importBackup(file: File) {
   const manifest = JSON.parse(new TextDecoder().decode(archive["manifest.json"] || new Uint8Array()));
   if (manifest.format !== "mednotes-backup" || manifest.version !== 1) throw new Error("This is not a supported MedNotes backup.");
   const store = currentRoots();
+  const recovery = currentRecovery();
   const grouped = new Map<string, { area: "active" | "trash"; files: Record<string, Uint8Array> }>();
   for (const [name, bytes] of Object.entries(archive)) {
     if (name === "manifest.json") continue;
@@ -449,12 +544,12 @@ export async function importBackup(file: File) {
     const postDir = await childDirectory(destination, id, true);
     try {
       for (const [filename, bytes] of Object.entries(item.files)) await writeBytes(postDir, filename, bytes);
-      await removeDirectory(store.recovery, id);
-      await copyDirectory(postDir, store.recovery, id);
+      await removeDirectory(recovery, id);
+      await copyDirectory(postDir, recovery, id);
       imported++;
     } catch (error) {
       await removeDirectory(destination, id);
-      await removeDirectory(store.recovery, id);
+      await removeDirectory(recovery, id);
       throw error;
     }
   }

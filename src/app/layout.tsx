@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import React from "react";
-import { AppProviders } from "@/providers/AppProviders";
 import Header from "@/components/ui/Header";
 
 // 👇 Add this at the top level — this file must be a module.
@@ -15,8 +14,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Medica App",
-  description: "Your Command Centre for Med School",
+  title: "Medica Beta",
+  description: "Medica — tools for medical students, in beta.",
 };
 
 export default function RootLayout({
@@ -27,10 +26,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <body className="antialiased flex min-h-screen flex-col bg-white">
-        <AppProviders>
-          <Header />
-          <main className="flex-1 w-full">{children}</main>
-        </AppProviders>
+        <Header />
+        <main className="flex-1 w-full">{children}</main>
       </body>
     </html>
   );

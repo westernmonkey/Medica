@@ -129,7 +129,9 @@ export default function QuizSelector({ structure }: { structure: QuizFileStructu
         <input
           type="number"
           value={numQuestions}
-          onChange={(e) => setNumQuestions(Math.max(1, parseInt(e.target.value) || 1))}
+          min={1}
+          max={100}
+          onChange={(e) => setNumQuestions(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
           className="p-2 border rounded"
         />
       </label>

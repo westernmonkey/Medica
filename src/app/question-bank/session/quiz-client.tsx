@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { QuestionData } from './page';
+import type { QuestionData } from './page';
 import { BlockMath, InlineMath } from 'react-katex';
+import { SafeHtml, SafeImage } from '@/components/SafeHtml';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
+type UserAnswer = { question: QuestionData; selectedOptionId: string; isCorrect: boolean };
 
 // Helper function to strip extraneous text wrappers and ensure $...$ wrapping for KaTeX.
 const cleanAnswerText = (text: string | null): string | null => {
@@ -45,7 +47,7 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
   const [score, setScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   
   const router = useRouter();
 
@@ -91,7 +93,7 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
         return <InlineMath key={index}>{part.slice(1, -1).trim()}</InlineMath>;
       }
       // Use dangerouslySetInnerHTML to render image tags and regular HTML/text
-      return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+      return <SafeHtml key={index} html={part} />;
     });
   };
 
@@ -163,7 +165,10 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
               return (
                 <div key={index} className="border border-gray-200 rounded-xl p-6 shadow-lg bg-white">
                   <div className="font-bold text-xl mb-4 text-blue-700">Question {index + 1}</div>
-                  <div className="text-base mb-4 prose max-w-none">{renderText(q.question.text)}</div>
+                  <div className="text-base mb-4 prose max-w-none">
+                    {renderText(q.question.text)}
+                    <SafeImage src={q.question.image} className="my-3 max-h-64 max-w-full" />
+                  </div>
                   
                   {/* --- RENDERED USER ANSWER --- */}
                   <div className={`p-3 rounded-lg border-2 ${answer.isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
@@ -190,7 +195,10 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
                   
                   <div className="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200">
                     <h4 className="font-bold text-lg mb-2 text-gray-800">Explanation:</h4>
-                    <div className="text-sm prose max-w-none">{renderText(q.solution.text)}</div>
+                    <div className="text-sm prose max-w-none">
+                      {renderText(q.solution.text)}
+                      <SafeImage src={q.solution.image} className="my-3 max-h-64 max-w-full" />
+                    </div>
                   </div>
                 </div>
               );
@@ -221,6 +229,7 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
         {/* --- Question --- */}
         <div className="text-2xl font-medium mb-8 prose max-w-none">
           {renderText(question.question.text)}
+          <SafeImage src={question.question.image} className="my-3 max-h-64 max-w-full" />
         </div>
 
         {/* --- Options --- */}
@@ -244,6 +253,7 @@ export default function QuizClient({ questions }: { questions: QuestionData[] })
               >
                 {/* 💡 Use renderText for options too, in case they contain math */}
                 {renderText(opt.text)}
+                <SafeImage src={opt.image} className="mt-2 max-h-48 max-w-full" />
               </button>
             );
           })}

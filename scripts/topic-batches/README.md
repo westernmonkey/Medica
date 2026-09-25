@@ -1,10 +1,12 @@
 # Manual topic encoding
 
-Continue reviewing every unencoded question under public/bank. The user approved all questions, in batches, and explicitly rejected Qwen and external model APIs. Preserve the 14 pre-existing labels. Do not run encode-question-topics.mjs; it calls Ollama.
+The private source bank is stored in `data/question-bank/source`; the build packs quiz fields into `.generated/question-bank` so individual question files are not deployed as public URLs. Topic batches keep full repository-relative paths under the source directory. Preserve existing labels. Do not run `encode-question-topics.mjs` as part of the deployment work; it calls Ollama.
+
+Older progress entries below use the original `public/bank` path from before this move; those files now live under `data/question-bank/source`.
 
 Read the actual question, options and solution before assigning a topic. Inspect essential diagrams; never infer unseen reaction details from the answer alone. Unreadable or ambiguous questions remain pending, with their paths and reasons recorded here. Folder names supply the chapter prefix only, not the topic.
 
-Save each set of explicit decisions as the next batch-NNN.json using full repo-relative question paths and values of the form "Chapter - Specific Topic". Run node scripts/apply-topic-batch.mjs scripts/topic-batches/batch-NNN.json. The writer validates paths and conflicts, reopens saved files, and verifies all other fields are unchanged. It is resumable: identical existing labels are skipped. A write failure stops processing; completed entries remain saved.
+Save each set of explicit decisions as the next batch-NNN.json using full repo-relative question paths and values of the form "Chapter - Specific Topic". Run `node scripts/apply-topic-batch.mjs scripts/topic-batches/batch-NNN.json`. The writer validates paths and conflicts, reopens saved files, and verifies all other fields are unchanged. It is resumable: identical existing labels are skipped. A write failure stops processing; completed entries remain saved.
 
 Count actual encodedTopic fields for progress; batch counts alone exclude pre-existing labels. Do not claim the whole bank is complete until every question is accounted for. No process classifies questions while this assistant is idle.
 
@@ -26,7 +28,7 @@ All paths below are relative to public/bank/bitsat/Chemistry/Practice. Source co
 - Chemical Kinetics/64c0e7946f5bfc7ab78ae613.json: the two pairwise comparisons yield the keyed orders, but rate magnitudes across all four runs are inconsistent with one rate constant.
 - Chemical Kinetics/64c0e7c06f5bfc7ab78ae78c.json: two options are equivalent (twice R's half-life equals S's half-life), although only one is keyed correct.
 
-## Scheduled progress
+## Previously encoded batches
 
 2026-09-22 23:12 UTC run: applied batch 018 (25 personally reviewed topics across Ionic Equilibrium and Polymers). Actual count: 432 encoded / 44,668 question files; 44,236 remain. The writer reopened saved JSON and verified all non-topic fields unchanged. Solution-only diagrams were not needed to identify these topics from the question, options, and written solutions. Source issues preserved: Ionic Equilibrium/64c0e8096f5bfc7ab78aea03.json gives an incorrect pH calculation for mixing pH 3 and pH 2 solutions, Ionic Equilibrium/64c0e8316f5bfc7ab78aeb65.json assumes an unstated NaOH concentration at equivalence, and Polymers/64c0e7fc6f5bfc7ab78ae991.json names tetrafluoroethane instead of tetrafluoroethylene as Teflon's monomer. Paths here are relative to public/bank/bitsat/Chemistry/Practice. Topics identify the assessed subject without endorsing those answers.
 
