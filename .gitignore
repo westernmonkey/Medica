@@ -19,6 +19,8 @@
 
 # production
 /build
+/public/mednotes-models/
+/public/mednotes-runtime/
 
 # misc
 .DS_Store

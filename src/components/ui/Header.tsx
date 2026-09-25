@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./button";
 
 export default function Header() {
+  const pathname = usePathname();
   const user = useAuthContext();
   const { signOut } = useAuth();
+
+  if (pathname === "/mednotes") return null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm bg-[#F7FDFACC]">
@@ -31,7 +35,7 @@ export default function Header() {
             Anatomy
           </Link>
           <Button asChild variant="ghost">
-            <Link href="/mednotes">Download App</Link>
+            <Link href="/mednotes">MedNotes</Link>
           </Button>
           {user ? (
             <div className="flex min-w-0 flex-wrap items-center gap-3">

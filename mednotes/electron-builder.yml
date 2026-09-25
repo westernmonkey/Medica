@@ -17,6 +17,8 @@ extraResources:
 
 asarUnpack:
   - node_modules/onnxruntime-node/**/*
+  - node_modules/sharp/**/*
+  - node_modules/@img/**/*
 
 protocols:
   - name: MedNotes
@@ -24,6 +26,14 @@ protocols:
       - mednotes
 
 mac:
+  files:
+    - electron/**/*
+    - renderer/**/*
+    - services/**/*
+    - package.json
+    - '!node_modules/onnxruntime-node/bin/napi-v3/linux/**'
+    - '!node_modules/onnxruntime-node/bin/napi-v3/win32/**'
+  x64ArchFiles: "**/node_modules/{onnxruntime-node,sharp,@img}/**/*.{node,dylib}"
   icon: build/icon.icns
   target:
     - target: dmg
@@ -35,6 +45,13 @@ mac:
   artifactName: MedNotes-${version}-universal.${ext}
 
 win:
+  files:
+    - electron/**/*
+    - renderer/**/*
+    - services/**/*
+    - package.json
+    - '!node_modules/onnxruntime-node/bin/napi-v3/darwin/**'
+    - '!node_modules/onnxruntime-node/bin/napi-v3/linux/**'
   target:
     - target: nsis
       arch:
@@ -42,7 +59,6 @@ win:
         - arm64
 
 dmg:
-  title: MedNotes
   backgroundColor: "#edf8f2"
   window:
     width: 540
