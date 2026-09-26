@@ -31,41 +31,28 @@ const MOBILE_BREAKPOINT = 768;
 
 const cardData: BentoCardProps[] = [
   {
-    color: '#2E8B57',
-    title: 'Plan the next study block without guessing.',
-    description: 'Dashboard-first workflow for organizing med-school tasks, topics, and what to review next.',
-    label: 'Command Centre'
-  },
-  {
     color: '#06402B',
-    title: 'Practice across your core subjects.',
-    description: 'Question bank coverage for physiology, anatomy, and the rest of the curriculum you are building.',
+    title: 'Practice by chapter.',
+    description: 'Build focused quizzes from the medical question bank.',
     label: 'Question Bank'
   },
   {
     color: '#06402B',
-    title: 'Think through patients one step at a time.',
-    description: 'Interactive clinical cases for sharpening diagnostic reasoning instead of memorizing in isolation.',
-    label: 'Clinical Cases',
+    title: 'Explore anatomy by system.',
+    description: 'Inspect named structures in a rotatable 3D atlas.',
+    label: 'Anatomy Atlas'
+  },
+  {
+    color: '#2E8B57',
+    title: 'Keep notes in folders you choose.',
+    description: 'Save posts and recovery backups locally, with tags and meaning-based search.',
+    label: 'MedNotes'
   },
   {
     color: '#06402B',
     title: 'Challenge a friend in a live room.',
-    description: '1v1 quiz duels with room codes, live answering, and quick competitive review.',
-    label: '1v1 Duels',
-
-  },
-  {
-    color: '#06402B',
-    title: 'Find the right learning resource faster.',
-    description: 'A lightweight resource finder for turning broad topics into useful study material.',
-    label: 'Resource Finder',
-  },
-  {
-    color: '#2E8B57',
-    title: 'Capture notes locally on desktop.',
-    description: 'MedNotes saves text, photos, voice notes, tags, and semantic-search vectors on your machine.',
-    label: 'MedNotes Desktop',
+    description: 'Join a quiz with a room code and answer together. Live rooms are in beta.',
+    label: '1v1 Duels'
   }
 ];
 
@@ -561,27 +548,6 @@ const MagicBento: React.FC<BentoProps> = ({
           @media (min-width: 600px) {
             .card-responsive {
               grid-template-columns: repeat(2, 1fr);
-            }
-          }
-          
-          @media (min-width: 1024px) {
-            .card-responsive {
-              grid-template-columns: repeat(4, 1fr);
-            }
-            
-            .card-responsive .card:nth-child(3) {
-              grid-column: span 2;
-              grid-row: span 2;
-            }
-            
-            .card-responsive .card:nth-child(4) {
-              grid-column: 1 / span 2;
-              grid-row: 2 / span 2;
-            }
-            
-            .card-responsive .card:nth-child(6) {
-              grid-column: 4;
-              grid-row: 3;
             }
           }
           

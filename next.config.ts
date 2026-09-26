@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/dashboard", destination: "/anatomy-final", permanent: true },
+      { source: "/anatomy/:path*", destination: "/anatomy-final", permanent: true },
+    ];
+  },
   outputFileTracingRoot: process.cwd(),
   serverExternalPackages: ["ioredis"],
   outputFileTracingExcludes: {

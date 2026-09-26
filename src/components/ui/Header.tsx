@@ -27,9 +27,6 @@ export default function Header() {
           <Link href="/1v1" className="text-sm font-medium">
             1v1
           </Link>
-          <Link href="/dashboard" className="text-sm font-medium">
-            Dashboard
-          </Link>
           <Link href="/anatomy-final" className="text-sm font-medium">
             Anatomy
           </Link>

@@ -6,17 +6,6 @@ import { Doctor } from "@/components/ui/Doctor";
 import MagicBento from "@/components/ui/MagicBento";
 
 export default function Home() {
-  const institutions = [
-    "Manipal University",
-    "Apollo Hospitals",
-    "AIIMS",
-    "JIPMER",
-    "CMC Vellore",
-    "Kasturba Medical College",
-    "Armed Forces Medical College",
-    "Dayanand Medical College and Hospital",
-  ];
-
   return (
     <div className="flex w-full flex-col items-center">
       {/* Hero Section */}
@@ -38,9 +27,9 @@ export default function Home() {
               understanding.
             </p>
 
-            <Link href="/dashboard" className="ml-[114px] mt-[16px]">
+            <Link href="/anatomy-final" className="ml-[114px] mt-[16px]">
               <Button className="bg-[#078859] text-lg text-white hover:bg-[#067a50] px-8 py-7">
-                Go to Dashboard
+                Explore the Anatomy Atlas
               </Button>
             </Link>
           </div>
@@ -52,43 +41,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trusted By Section */}
-      <section className="mt-[90px] w-full bg-[#F7FDFACC] py-5">
-        <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          To be Trusted by students at top medical institutions
-        </h2>
-
-        <div className="relative mt-8 overflow-x-hidden">
-          <div className="flex animate-marquee whitespace-nowrap">
-            {institutions.map((name, index) => (
-              <span
-                key={`first-${index}`}
-                className="mx-8 text-xl font-medium text-gray-400"
-              >
-                {name}
-              </span>
-            ))}
-            {institutions.map((name, index) => (
-              <span
-                key={`second-${index}`}
-                className="mx-8 text-xl font-medium text-gray-400"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="w-full py-24">
         <div className="container mx-auto flex flex-col items-center">
-          <h2 className="text-3xl font-bold mb-8">Features</h2>
+          <h2 className="mb-8 text-3xl font-bold">Available in the beta</h2>
           <MagicBento glowColor="7, 136, 89" />
         </div>
       </section>
-
-      <h2 className="font-bold py-40 text-3xl"> How it works Section to be added</h2>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {StudyBoard} from './study-board';
 import {entryOrgan,lessonURL,parseLesson,type LessonLocation} from './organ-lessons/catalog';
 import type {Manifest,Part,Selection,StudyLayout,SystemStatus} from './types';
 import './anatomy-final.css';
-function Icon({kind}:{kind:'search'|'reset'|'arrow'|'close'}){return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{kind==='search'?<><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>:kind==='reset'?<><path d="M4 10a8 8 0 1 1 2 8M4 4v6h6"/></>:kind==='close'?<path d="m6 6 12 12M18 6 6 18"/>:<path d="m14 6-6 6 6 6"/>}</svg>;}
+function Icon({kind}:{kind:'search'|'reset'|'close'}){return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{kind==='search'?<><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>:kind==='reset'?<><path d="M4 10a8 8 0 1 1 2 8M4 4v6h6"/></>:<path d="m6 6 12 12M18 6 6 18"/>}</svg>;}
 const OrganLessonDialog=lazy(()=>import('./organ-lessons/dialog'));
 export default function AnatomyExplorer(){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<AnatomyScene|null>(null),tooltip=useRef<HTMLDivElement>(null),search=useRef<HTMLInputElement>(null);
@@ -42,7 +42,7 @@ export default function AnatomyExplorer(){
  const setBoard=(value:number)=>{setExplode(value);viewer.current?.setStudy(value/100);};
  const count=manifest?.structures.filter(p=>p.systems.some(s=>enabled.includes(s))).length||0;
  return <div className="anatomy-final">
-  <header className="af-header"><Link className="af-brand" href="/" aria-label="Medica home"><Image className="af-brand-logo" src="/Medica-logo.png" alt="Medica" width={115} height={35} unoptimized/><span className="af-brand-divider"/></Link><Link href="/anatomy" className="af-back" aria-label="Organ library"><Icon kind="arrow"/><span>Organ library</span></Link></header>
+  <header className="af-header"><Link className="af-brand" href="/" aria-label="Medica home"><Image className="af-brand-logo" src="/Medica-logo.png" alt="Medica" width={115} height={35} unoptimized/></Link></header>
   <div className="af-workspace">
    <aside className="af-sidebar" aria-label="Anatomy controls">
     <div className="af-intro"><p className="af-eyebrow">CONNECTED ANATOMY</p><h1>Male anatomy</h1><p className="af-muted">11 systems · anatomical review pending</p></div>

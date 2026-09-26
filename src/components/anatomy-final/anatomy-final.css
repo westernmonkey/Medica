@@ -16,9 +16,6 @@ body:has(.anatomy-final)>header {display:none;}
 .anatomy-final button {color:inherit;}
 .af-header {display:flex;align-items:center;justify-content:space-between;padding:var(--af-16) var(--af-24);border-bottom:1px solid var(--af-border);gap:var(--af-16);}
 .af-brand {display:flex;align-items:center;gap:var(--af-12);font-weight:700;text-decoration:none;color:var(--af-text);}
-.af-brand-divider {height:20px;width:1px;background:var(--af-border);margin:0 var(--af-8);}
-.af-product {letter-spacing:0;}
-.af-back {display:flex;align-items:center;gap:var(--af-4);text-decoration:none;}
 .af-workspace {display:grid;grid-template-columns:300px minmax(0,1fr);min-height:0;}
 .af-sidebar {min-height:0;overflow:auto;padding:var(--af-24) var(--af-16) var(--af-16);border-right:1px solid var(--af-border);scrollbar-width:thin;scrollbar-color:var(--af-border) transparent;}
 .af-intro {margin-bottom:var(--af-24);}
@@ -88,9 +85,6 @@ body:has(.anatomy-final)>header {display:none;}
 @media(max-width:640px) {
 .af-header {padding:var(--af-8) var(--af-12)}
 .af-brand {gap:var(--af-8);font-size:12px}
-.af-brand-divider {display:none}
-.af-product {display:none}
-.af-back span {display:none}
 .af-workspace {grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
 .af-sidebar {padding:var(--af-12);border-right:0;border-bottom:1px solid var(--af-border)}
 .af-intro {display:none}
@@ -184,9 +178,6 @@ body:has(.anatomy-final)>header {display:none;}
 .af-header {min-height:72px;background:var(--af-brand-gradient)}
 .af-brand {letter-spacing:0}
 .af-brand-logo {width:115px;height:auto;object-fit:contain}
-.af-product {font-size:14px;color:var(--af-accent);font-weight:500}
-.af-back {font-size:14px;font-weight:500;color:var(--af-accent);padding:8px 12px;border:1px solid var(--af-border);border-radius:var(--af-r10);background:var(--af-bg)}
-.af-back:hover {color:var(--af-brand-hover);background:var(--af-raised)}
 .af-sidebar {background:var(--af-brand-gradient)}
 .af-intro h1 {font-size:30px;font-weight:700;color:var(--af-heading);letter-spacing:-.035em}
 .af-intro .af-eyebrow {color:var(--af-accent);font-size:11px;letter-spacing:.1em}
@@ -225,7 +216,6 @@ body:has(.anatomy-final)>header {display:none;}
 @media(max-width:640px){
 .af-header {min-height:60px}
 .af-brand-logo {width:100px}
-.af-back {padding:8px}
 .af-system-name {font-size:12px}
 .af-system {padding:6px;min-height:40px}
 .af-credits {font-size:9px}
